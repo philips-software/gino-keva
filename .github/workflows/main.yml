@@ -1,0 +1,117 @@
+name: Build and Test
+
+# This workflow will run on master branch and on any pull requests targeting master
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    container: golang:1.16-buster
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Lint Go Code
+        run: |
+          go get -u golang.org/x/lint/golint
+          make lint
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    container: golang:1.16-buster
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Run Unit tests
+        run: make test
+
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    container: golang:1.16-buster
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Build
+        run: make build
+
+      - name: Create prerelease
+        if: ${{ github.ref == 'refs/heads/master' }}
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: latest
+          name: "Development Build"
+          prerelease: true
+          files: build/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add binaries to release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: softprops/action-gh-release@v1
+        with:
+          files: build/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Docker build/push
+    needs: [lint, test, build]
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2       
+
+      - uses: robinraju/release-downloader@v1
+        with:
+          repository: ${{ github.repository }}
+          latest: true
+          fileName: gino-keva
+          out-file-path: build/
+          token: "${{ secrets.GITHUB_TOKEN }}"
+      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            wyarde/gino-keva
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Login to DockerHub
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: Image build - Linux
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true

@@ -1,0 +1,10 @@
+{
+	"dockerFile": "Dockerfile",
+	"extensions": [
+		"golang.Go",
+		"ms-azuretools.vscode-docker",
+		"yzhang.markdown-all-in-one",
+		"exiasr.hadolint",
+		"me-dutour-mathieu.vscode-github-actions"
+	]
+}
