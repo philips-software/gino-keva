@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/philips-internal/gino-keva/internal/git"
+	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 

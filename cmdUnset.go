@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/philips-internal/gino-keva/internal/git"
+	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
 

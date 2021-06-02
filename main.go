@@ -6,7 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/philips-internal/gino-keva/internal/git"
+	"github.com/philips-software/gino-keva/internal/git"
 )
 
 const (

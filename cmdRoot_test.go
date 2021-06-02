@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/philips-internal/gino-keva/internal/git"
+	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

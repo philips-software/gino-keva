@@ -1,4 +1,4 @@
-module github.com/philips-internal/gino-keva
+module github.com/philips-software/gino-keva
 
 go 1.16
 
