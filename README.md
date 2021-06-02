@@ -1,4 +1,4 @@
-[![Build and Test](https://github.com/philips-internal/gino-keva/actions/workflows/main.yml/badge.svg)](https://github.com/philips-internal/gino-keva/actions/workflows/main.yml)
+[![Build and Test](https://github.com/philips-software/gino-keva/actions/workflows/main.yml/badge.svg)](https://github.com/philips-software/gino-keva/actions/workflows/main.yml)
 
 <!-- omit in toc -->
 # Gino Keva - Git Notes Key Values
