@@ -1,34 +1,38 @@
 [![Build and Test](https://github.com/philips-software/gino-keva/actions/workflows/main.yml/badge.svg)](https://github.com/philips-software/gino-keva/actions/workflows/main.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/philips-software/gino-keva)](https://goreportcard.com/report/github.com/philips-software/gino-keva)
 
 <!-- omit in toc -->
 
 # Gino Keva - Git Notes Key Values
 
-Gino Keva is a simple Key Value store on top of Git Notes. The key/values are stored as json in a git note linked to the current commit. If there's not a note present yet, Gino Keva will walk back in the git history, and copy the first note found over to the current commit.
+Gino Keva is a simple Key Value store built on top of Git Notes. The key/values are stored as json in a git note linked to the current commit. If there's not a note present yet, Gino Keva will walk back in the git history, and copy the first note found over to the current commit.
 
 <!-- omit in toc -->
 
 ## Table of Contents
 
-- [Use case](#use-case)
-- [Requirements](#requirements)
-- [How to use](#how-to-use)
-  - [Warning: Push your changes](#warning-push-your-changes)
-  - [Set key/value pairs](#set-keyvalue-pairs)
-  - [List all key/value pairs](#list-all-keyvalue-pairs)
-  - [Unset keys](#unset-keys)
-  - [Use custom notes reference](#use-custom-notes-reference)
-- [FAQ](#faq)
-  - [I need additional git configuration? How can I do that?](#i-need-additional-git-configuration-how-can-i-do-that)
-  - [I need a custom output format](#i-need-a-custom-output-format)
+- [Gino Keva - Git Notes Key Values](#gino-keva---git-notes-key-values)
+  - [Table of Contents](#table-of-contents)
+  - [Use case](#use-case)
+    - [Use case - Store new component version](#use-case---store-new-component-version)
+    - [Use case - List all component versions corresponding for a certain commit](#use-case---list-all-component-versions-corresponding-for-a-certain-commit)
+  - [Requirements](#requirements)
+  - [How to use](#how-to-use)
+    - [Warning: Push your changes](#warning-push-your-changes)
+    - [Set key/value pairs](#set-keyvalue-pairs)
+    - [Unset keys](#unset-keys)
+    - [Use custom notes reference](#use-custom-notes-reference)
+  - [FAQ](#faq)
+    - [I need additional git configuration? How can I do that?](#i-need-additional-git-configuration-how-can-i-do-that)
+    - [I need a custom output format](#i-need-a-custom-output-format)
 
 ## Use case
 
-_Although Gino Keva was written with the below use case in mind, it intends to be a generic tool. Don't get discouraged your intended use is very different. Instead feel free to open a ticket, so we can discuss if we can make it work._
+_Although Gino Keva was written with the below use case in mind, it intends to be a generic tool. Don't get discouraged if your intended use is very different. Instead feel free to open a ticket, so we can discuss if we can make it work._
 
-The need for Gino Keva was born in an environment where ~20 components (some would call micro-services) live together in a single repository. Every component is deployed in a docker container, together they form an application/service. There's a single build pipeline that triggers upon any change. The pipeline will then fan out and trigger independent builds (and tests) for any component impacted by the change, each resulting in a new docker container which is versioned and pushed to the registry. Once all components are rebuild, the set of containers (of which some newly built) can be deployed and tested and eventually be promoted to production.
+The need for Gino Keva was born in an environment where ~20 components (some would call micro-services) live together in a single repository. Every component is deployed in a docker container; together they form an application/service. There's a single build pipeline that triggers upon any change. The pipeline will then fan out and trigger an independent build (and test) for each component impacted by the change. For each component, this results in a new docker container which is versioned and pushed to the registry. Once all components are rebuilt, the set of containers (of which some newly built) can be deployed and tested and eventually be promoted to production.
 
-Due to the selective build mechanism, versions of each component are not coupled. Some will rarely change, others might change daily. Now how to keep track of the set of containers that make up the application? It makes sense to keep this version inside the version control system, so we have this "meta data" available for each commit that was built. But we'd hate to see the build pipeline poluting the git history with artificial commits. This is where Gino Keva was born.
+Due to the selective build mechanism, the versions of components are not coupled. Some will rarely change, others frequently. Now how to keep track of the set of containers that make up the application? It makes sense to keep this build metadata  inside the version control system, so we have it available for each commit that was built. But we'd hate to see the build pipeline polluting the git history with artificial commits. This is where Gino Keva was born.
 
 <!-- omit in toc -->
 
