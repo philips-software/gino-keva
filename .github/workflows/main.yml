@@ -92,6 +92,8 @@ jobs:
           out-file-path: build/
           token: "${{ secrets.GITHUB_TOKEN }}"
       
+      - run: chmod +x build/gino-keva
+      
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
