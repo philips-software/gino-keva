@@ -72,7 +72,7 @@ func main() {
 		attemptsLeft--
 		uc, upstreamChanged := err.(*UpstreamChanged)
 
-		if attemptsLeft > 0 && upstreamChanged && !uc.fetchEnabled {
+		if attemptsLeft > 0 && upstreamChanged && uc.fetchEnabled {
 			log.WithField("attemptsLeft", attemptsLeft).Info("Upstream has changed in the meanwhile. Starting again from fetch")
 		} else {
 			break
