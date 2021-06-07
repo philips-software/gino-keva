@@ -139,6 +139,15 @@ gino-keva set foo bar
 
 Gino Keva supports just simple `key=value` format (default), or json (`--output=json`). However, you can parse the output in any format you'd like.
 
+Example: Use gino-keva as part of a GitHub action:
+
+```console
+foo@bar:~$ gino-keva list | awk -F= '{print "::set-output name="$1"::"$2}'
+::set-output name=counter::12
+::set-output name=my_key::my_value
+::set-output name=pi::3.14
+```
+
 Example: Use gino-keva as part of an Azure Devops pipeline:
 
 ```console
