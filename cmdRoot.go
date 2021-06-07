@@ -96,7 +96,7 @@ func pushNotes(notesAccess git.Notes, notesRef string) error {
 	out, err := notesAccess.Push(globalFlags.NotesRef)
 
 	if err != nil {
-		if strings.Contains(out, "! [rejected]") {
+		if strings.Contains(out, "! [rejected]") || strings.Contains(out, "! [remote rejected]") {
 			err = &UpstreamChanged{fetchEnabled: globalFlags.Fetch}
 		} else {
 			log.Error(out)
