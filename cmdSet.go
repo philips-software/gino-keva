@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -8,6 +10,15 @@ import (
 	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
+
+// InvalidKey error indicates the key is not valid
+type InvalidKey struct {
+	msg string
+}
+
+func (i InvalidKey) Error() string {
+	return fmt.Sprintf("Invalid key: %v", i.msg)
+}
 
 func addSetCommandTo(root *cobra.Command) {
 	var (
@@ -42,6 +53,11 @@ func addSetCommandTo(root *cobra.Command) {
 }
 
 func set(notesAccess git.Notes, notesRef string, key string, value string, maxDepth int) (err error) {
+	err = validateKey(key)
+	if err != nil {
+		return err
+	}
+
 	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
 	if err != nil {
 		return err
@@ -74,6 +90,38 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 	}
 
 	return err
+}
+
+func validateKey(key string) error {
+	if key == "" {
+		return &InvalidKey{msg: "key cannot be empty"}
+	}
+
+	{
+		pattern := `[^A-Za-z0-9_]`
+		matched, err := regexp.Match(pattern, []byte(key))
+		if err != nil {
+			return err
+		}
+
+		if matched {
+			return &InvalidKey{msg: "key contains invalid characters"}
+		}
+	}
+
+	{
+		pattern := `^[^A-Za-z]`
+		matched, err := regexp.Match(pattern, []byte(key))
+		if err != nil {
+			return err
+		}
+
+		if matched {
+			return &InvalidKey{msg: "first character is not a letter"}
+		}
+	}
+
+	return nil
 }
 
 func truncateHash(hash string, chars int) string {
