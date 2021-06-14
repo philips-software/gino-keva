@@ -53,6 +53,7 @@ func addSetCommandTo(root *cobra.Command) {
 }
 
 func set(notesAccess git.Notes, notesRef string, key string, value string, maxDepth int) (err error) {
+	key = sanitizeKey(key)
 	err = validateKey(key)
 	if err != nil {
 		return err
@@ -92,13 +93,17 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 	return err
 }
 
+func sanitizeKey(key string) string {
+	return strings.ToUpper(strings.ReplaceAll(key, "-", "_"))
+}
+
 func validateKey(key string) error {
 	if key == "" {
 		return &InvalidKey{msg: "key cannot be empty"}
 	}
 
 	{
-		pattern := `[^A-Za-z0-9_-]`
+		pattern := `[^A-Za-z0-9_]`
 		matched, err := regexp.Match(pattern, []byte(key))
 		if err != nil {
 			return err

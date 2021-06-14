@@ -39,6 +39,12 @@ func addUnsetCommandTo(root *cobra.Command) {
 }
 
 func unset(notesAccess git.Notes, notesRef string, key string, maxDepth int) error {
+	key = sanitizeKey(key)
+	err := validateKey(key)
+	if err != nil {
+		return err
+	}
+
 	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
 	if err != nil {
 		return err

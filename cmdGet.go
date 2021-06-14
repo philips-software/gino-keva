@@ -31,6 +31,12 @@ func addGetCommandTo(root *cobra.Command) {
 }
 
 func getValue(notesAccess git.Notes, notesRef string, key string, maxDepth int) (string, error) {
+	key = sanitizeKey(key)
+	err := validateKey(key)
+	if err != nil {
+		return "", err
+	}
+
 	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
 	if err != nil {
 		return "", err

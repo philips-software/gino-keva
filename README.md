@@ -70,7 +70,7 @@ If you do not do this, subsequent fetches will overwrite any local changes made.
 The first time you set a key/value, gino-keva will warn you that no prior notes were found within the last 50 commits:
 
 ````console
-foo@bar:~$ gino-keva set my_key my_value
+foo@bar:~$ gino-keva set my-key my_value
 WARN[0000] No prior notes found!                         MaxDepth=50
 
 You can continue to add other key/values:
@@ -83,21 +83,21 @@ foo@bar (f10b970d):~$ gino-keva set foo bar
 
 ```console
 foo@bar (f10b970d):~$ gino-keva list
-counter=12
-foo=bar
-my_key=my_value
+COUNTER=12
+FOO=bar
+MY_KEY=my_value
 ```
 
-gino-keva converts the key/value pairs into json and stores these in git notes, along with the souce commit hash. You can retrieve this format using the `--output=json` flag:
+gino-keva converts the key/value pairs into json and stores these in git notes, along with the souce commit hash. You can retrieve this format using the `--output=raw` flag:
 
 ```console
-foo@bar (f10b970d):~$ gino-keva list --output=json
-{"counter":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"my_key":{"data":"my_value","source":"f10b970d"}}
+foo@bar (f10b970d):~$ gino-keva list --output=raw
+{"COUNTER":{"data":"12","source":"f10b970d"},"FOO":{"data":"bar","source":"f10b970d"},"MY_KEY":{"data":"my_value","source":"f10b970d"}}
 
 foo@bar (f10b970d):~$ git commit --allow-empty -m "Dummy commit"
 foo@bar (a8517558):~$ gino-keva set pi 3.14
 foo@bar (a8517558):~$ gino-keva list --output=json
-{"counter":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"my_key":{"data":"my_value","source":"f10b970d"},"pi":{"data":"3.14","source":"a8517558"}}
+{"COUNTER":{"data":"12","source":"f10b970d"},"FOO":{"data":"bar","source":"f10b970d"},"MY_KEY":{"data":"my_value","source":"f10b970d"},"PI":{"data":"3.14","source":"a8517558"}}
 ```
 
 ### Unset keys
@@ -107,9 +107,9 @@ Finally, you can unset keys using `unset`:
 ```console
 foo@bar (a8517558):~$ gino-keva unset foo
 foo@bar (a8517558):~$ gino-keva list
-counter=12
-my_key=my_value
-pi=3.14
+COUNTER=12
+MY_KEY=my_value
+PI=3.14
 ```
 
 ### Use custom notes reference
@@ -143,16 +143,16 @@ Example: Use gino-keva as part of a GitHub action:
 
 ```console
 foo@bar:~$ gino-keva list | awk -F= '{print "::set-output name="$1"::"$2}'
-::set-output name=counter::12
-::set-output name=my_key::my_value
-::set-output name=pi::3.14
+::set-output name=COUNTER::12
+::set-output name=MY_KEY::my_value
+::set-output name=PI::3.14
 ```
 
 Example: Use gino-keva as part of an Azure Devops pipeline:
 
 ```console
 foo@bar:~$ gino-keva list | awk -F= '{print "##vso[task.setvariable variable="$1"]"$2}'
-##vso[task.setvariable variable=counter]12
-##vso[task.setvariable variable=my_key]my_value
-##vso[task.setvariable variable=pi]3.14
+##vso[task.setvariable variable=COUNTER]12
+##vso[task.setvariable variable=MY_KEY]my_value
+##vso[task.setvariable variable=PI]3.14
 ```

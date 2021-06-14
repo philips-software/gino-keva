@@ -153,17 +153,17 @@ var testDataEmpty = testData{
 }
 
 var testDataKeyValue = testData{
-	input:       `{"key": {"data":"value", "source": "01234567"}}`,
-	outputRaw:   "{\"key\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
-	outputPlain: "key=value\n",
-	outputJSON:  "{\n  \"key\": \"value\"\n}\n",
+	input:       `{"MY_KEY": {"data":"value", "source": "01234567"}}`,
+	outputRaw:   "{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	outputPlain: "MY_KEY=value\n",
+	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
 }
 
 var testDataKeyValueFooBar = testData{
-	input:       `{"foo": {"data":"bar", "source": "abcd1234"},"key": {"data":"value", "source": "01234567"}}`,
-	outputRaw:   "{\"foo\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"key\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
-	outputPlain: "key=value\nfoo=bar\n",
-	outputJSON:  "{\n  \"foo\": \"bar\",\n  \"key\": \"value\"\n}\n",
+	input:       `{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}`,
+	outputRaw:   "{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	outputPlain: "MY_KEY=value\nFOO=bar\n",
+	outputJSON:  "{\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n}\n",
 }
 
 func executeCommandContext(ctx context.Context, root *cobra.Command, args ...string) (output string, err error) {

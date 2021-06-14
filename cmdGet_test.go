@@ -19,7 +19,7 @@ func TestGetCommand(t *testing.T) {
 	}{
 		{
 			name:       "Get value of a key",
-			args:       []string{"get", "key"},
+			args:       []string{"get", "MY_KEY"},
 			wantOutput: "value",
 		},
 	}
@@ -53,7 +53,7 @@ func TestGetValue(t *testing.T) {
 	}{
 		{
 			name:      "Get value of an existing key",
-			key:       "key",
+			key:       "MY_KEY",
 			depth:     0,
 			wantValue: "value",
 		},
