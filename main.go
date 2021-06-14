@@ -33,9 +33,15 @@ func (v Values) GetJSON(key string) string {
 	return v.values[key].Data
 }
 
-// Iterate the collection values
-func (v *Values) Iterate() map[string]Value {
-	return v.values
+// Iterate the collection value data
+func (v *Values) Iterate() map[string]string {
+	result := make(map[string]string)
+
+	for k, v := range v.values {
+		result[k] = v.Data
+	}
+
+	return result
 }
 
 // Remove a key from the collection

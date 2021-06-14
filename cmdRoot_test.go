@@ -153,13 +153,13 @@ var testDataEmpty = testData{
 var testDataKeyValue = testData{
 	input:       `{"key": {"data":"value", "source": "01234567"}}`,
 	outputPlain: "key=value\n",
-	outputJSON:  "{\"key\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	outputJSON:  "{\n  \"key\": \"value\"\n}\n",
 }
 
 var testDataKeyValueFooBar = testData{
 	input:       `{"foo": {"data":"bar", "source": "abcd1234"},"key": {"data":"value", "source": "01234567"}}`,
 	outputPlain: "key=value\nfoo=bar\n",
-	outputJSON:  "{\"foo\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"key\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	outputJSON:  "{\n  \"foo\": \"bar\",\n  \"key\": \"value\"\n}\n",
 }
 
 func executeCommandContext(ctx context.Context, root *cobra.Command, args ...string) (output string, err error) {

@@ -108,7 +108,7 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 			out = "\n"
 		} else {
 			for k, v := range values.Iterate() {
-				out += fmt.Sprintf("%s=%s\n", k, v.Data)
+				out += fmt.Sprintf("%s=%s\n", k, v)
 			}
 		}
 	case "json":
@@ -119,7 +119,7 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 }
 
 func marshal(values *Values) (string, error) {
-	result, err := json.Marshal(values.Iterate())
+	result, err := json.MarshalIndent(values.Iterate(), "", "  ")
 	if err != nil {
 		return "", err
 	}
