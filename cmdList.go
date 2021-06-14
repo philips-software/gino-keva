@@ -11,6 +11,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// InvalidOutputFormat error indicates the specified output format is invalid
+type InvalidOutputFormat struct {
+}
+
+func (InvalidOutputFormat) Error() string {
+	return "Invalid output format specified"
+}
+
 func addListCommandTo(root *cobra.Command) {
 	var (
 		outputFormat string
@@ -33,7 +41,7 @@ func addListCommandTo(root *cobra.Command) {
 		},
 		Args: cobra.NoArgs,
 	}
-	listCommand.Flags().StringVarP(&outputFormat, "output", "o", "plain", "Set output format (plain/json)")
+	listCommand.Flags().StringVarP(&outputFormat, "output", "o", "plain", "Set output format (plain/json/raw)")
 
 	root.AddCommand(listCommand)
 }
@@ -103,6 +111,7 @@ func findNoteText(notesAccess git.Notes, options *findTextOptions) (string, erro
 
 func convertValuesToOutput(values *Values, outputFlag string) (out string, err error) {
 	switch outputFlag {
+
 	case "plain":
 		if values.Count() == 0 {
 			out = "\n"
@@ -111,15 +120,31 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 				out += fmt.Sprintf("%s=%s\n", k, v)
 			}
 		}
+
 	case "json":
-		out, err = marshal(values)
+		out, err = marshalJSON(values)
+
+	case "raw":
+		out, err = marshalRaw(values)
+
+	default:
+		err = &InvalidOutputFormat{}
 	}
 
 	return out, err
 }
 
-func marshal(values *Values) (string, error) {
+func marshalJSON(values *Values) (string, error) {
 	result, err := json.MarshalIndent(values.Iterate(), "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s\n", result), nil
+}
+
+func marshalRaw(values *Values) (string, error) {
+	result, err := json.Marshal(values.IterateRaw())
 	if err != nil {
 		return "", err
 	}

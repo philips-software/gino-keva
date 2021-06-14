@@ -29,6 +29,11 @@ func TestListCommand(t *testing.T) {
 			args:       []string{"list", "--output", "json"},
 			wantOutput: td.outputJSON,
 		},
+		{
+			name:       "List all notes (raw output)",
+			args:       []string{"list", "--output", "raw"},
+			wantOutput: td.outputRaw,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -66,6 +71,11 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 			name:         "Empty note (json)",
 			outputFormat: "json",
 			wantText:     td.outputJSON,
+		},
+		{
+			name:         "Empty note (raw)",
+			outputFormat: "raw",
+			wantText:     td.outputRaw,
 		},
 	}
 
@@ -111,6 +121,19 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, testDataEmpty.outputPlain, gotOutput)
+	})
+}
+
+func TestInvalidOutputFormat(t *testing.T) {
+	t.Run("InvalidOutputFormat error raised when specifying invalid output format", func(t *testing.T) {
+		notesAccess := notesStub{
+			showImplementation: dummyStubInputsStringString,
+		}
+
+		_, err := getListOutput(&notesAccess, "dummyRef", 0, "invalid format")
+		if assert.Error(t, err) {
+			assert.IsType(t, &InvalidOutputFormat{}, err)
+		}
 	})
 }
 

@@ -44,6 +44,11 @@ func (v *Values) Iterate() map[string]string {
 	return result
 }
 
+// IterateRaw iterates the raw collection
+func (v *Values) IterateRaw() map[string]Value {
+	return v.values
+}
+
 // Remove a key from the collection
 func (v *Values) Remove(key string) {
 	delete(v.values, key)

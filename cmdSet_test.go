@@ -21,14 +21,14 @@ func TestSetCommand(t *testing.T) {
 			start:  testDataEmpty.input,
 			args:   []string{"set", "key", "value"},
 			source: "01234567",
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 		{
 			name:   "Start empty, set key=value (non-default ref)",
 			start:  testDataEmpty.input,
 			args:   []string{"set", "key", "value", "--ref", "non_default"},
 			source: "01234567",
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 	}
 
@@ -115,21 +115,21 @@ func TestSet(t *testing.T) {
 			start:  testDataEmpty.input,
 			key:    "key",
 			value:  Value{Data: "value", Source: "01234567"},
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 		{
 			name:   "Start key=value, set foo=bar",
 			start:  testDataKeyValue.input,
 			key:    "foo",
 			value:  Value{Data: "bar", Source: "abcd1234"},
-			wanted: testDataKeyValueFooBar.outputJSON,
+			wanted: testDataKeyValueFooBar.outputRaw,
 		},
 		{
 			name:   "Source hash is cut off at 8 characters",
 			start:  testDataEmpty.input,
 			key:    "key",
 			value:  Value{Data: "value", Source: "01234567_and_the_remainder"},
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 	}
 

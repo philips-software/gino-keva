@@ -77,7 +77,7 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 		Source: truncateHash(commitHash, 8),
 	})
 
-	noteText, err := convertValuesToOutput(values, "json")
+	noteText, err := convertValuesToOutput(values, "raw")
 	if err != nil {
 		return err
 	}
