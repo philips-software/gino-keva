@@ -51,20 +51,34 @@ func TestSetCommand(t *testing.T) {
 
 func TestInvalidKeys(t *testing.T) {
 	testCases := []struct {
-		name       string
-		invalidKey string
+		name  string
+		key   string
+		valid bool
 	}{
 		{
-			name:       "Key cannot be empty",
-			invalidKey: "",
+			name:  "Key can container underscores and dashes",
+			key:   "This-key_is-valid",
+			valid: true,
 		},
 		{
-			name:       "Key contains an invalid character",
-			invalidKey: "foo!",
+			name:  "Key cannot be empty",
+			key:   "",
+			valid: false,
 		},
 		{
-			name:       "First character of key is not a letter",
-			invalidKey: "2BeOrNot2Be",
+			name:  "Key contains an invalid character",
+			key:   "foo!",
+			valid: false,
+		},
+		{
+			name:  "First character of key is not a letter",
+			key:   "2BeOrNot2Be",
+			valid: false,
+		},
+		{
+			name:  "Last character of key is not a letter",
+			key:   "invalid-",
+			valid: false,
 		},
 	}
 
@@ -76,9 +90,13 @@ func TestInvalidKeys(t *testing.T) {
 				showImplementation:         dummyStubInputsStringString,
 			}
 
-			err := set(notesAccess, "dummyRef", tc.invalidKey, "dummyValue", 0)
-			if assert.Error(t, err) {
-				assert.IsType(t, &InvalidKey{}, err)
+			err := set(notesAccess, "dummyRef", tc.key, "dummyValue", 0)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				if assert.Error(t, err) {
+					assert.IsType(t, &InvalidKey{}, err)
+				}
 			}
 		})
 	}
