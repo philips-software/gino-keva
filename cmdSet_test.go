@@ -49,12 +49,17 @@ func TestSetCommand(t *testing.T) {
 	}
 }
 
-func TestInvalidKeys(t *testing.T) {
+func TestKeyValidation(t *testing.T) {
 	testCases := []struct {
 		name  string
 		key   string
 		valid bool
 	}{
+		{
+			name:  "Key can end on number",
+			key:   "TheAnswerIs42",
+			valid: true,
+		},
 		{
 			name:  "Key can container underscores and dashes",
 			key:   "This-key_is-valid",
@@ -76,7 +81,7 @@ func TestInvalidKeys(t *testing.T) {
 			valid: false,
 		},
 		{
-			name:  "Last character of key is not a letter",
+			name:  "Last character of key is not a letter of number",
 			key:   "invalid-",
 			valid: false,
 		},

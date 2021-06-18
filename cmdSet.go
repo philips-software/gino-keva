@@ -127,14 +127,14 @@ func validateKey(key string) error {
 	}
 
 	{
-		pattern := `[^A-Za-z]$`
+		pattern := `[^A-Za-z0-9]$`
 		matched, err := regexp.Match(pattern, []byte(key))
 		if err != nil {
 			return err
 		}
 
 		if matched {
-			return &InvalidKey{msg: "last character is not a letter"}
+			return &InvalidKey{msg: "last character is not a letter or number"}
 		}
 	}
 
