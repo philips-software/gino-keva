@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -15,13 +14,15 @@ func addShowFlagCommandTo(root *cobra.Command) {
 		Hidden: true, // For testing purposes only
 		RunE: func(cmd *cobra.Command, args []string) error {
 			flagName := args[0]
-			flagValue, err := cmd.Flags().GetString(flagName)
 
-			if err != nil && strings.HasPrefix(err.Error(), "flag accessed but not defined:") {
+			flag := cmd.Flag(flagName)
+			if flag == nil {
 				return fmt.Errorf("unknown flag [%v]", flagName)
 			}
 
+			flagValue := flag.Value.String()
 			fmt.Fprint(cmd.OutOrStdout(), flagValue)
+
 			return nil
 		},
 		Args: cobra.ExactArgs(1),

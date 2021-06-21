@@ -18,4 +18,14 @@ func TestShowFlags(t *testing.T) {
 
 		assert.Error(t, err)
 	})
+	t.Run("Able to retrieve integer flags", func(t *testing.T) {
+		root := NewRootCommand()
+		args := []string{"show-flag", "max-depth", "--max-depth", "42"}
+		ctx := git.ContextWithNotes(context.Background(), &notesDummy{})
+
+		output, err := executeCommandContext(ctx, root, args...)
+
+		assert.NoError(t, err)
+		assert.Equal(t, "42", output)
+	})
 }
