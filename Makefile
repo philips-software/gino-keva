@@ -8,7 +8,7 @@ GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
 all: build lint test
 
 dep: ## Get the dependencies
-	@go mod download
+	@go mod tidy
 
 lint: ## Lint Golang files
 	@golint -set_exit_status ${PKG_LIST}

@@ -54,7 +54,7 @@ For each deployment, the list of containers which make up the application is sim
 
 ## Requirements
 
-- Git CLI: Gino Keva uses the git CLI as installed on the host. Tested with version 2.20.1, however any recent version should do.
+- Git CLI: Gino Keva uses the git CLI as installed on the host. Tested with version 2.32.0, however any recent version should do.
 
 ## How to use
 
