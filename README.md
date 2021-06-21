@@ -71,7 +71,7 @@ The first time you set a key/value, gino-keva will warn you that no prior notes 
 
 ````console
 foo@bar:~$ gino-keva set my-key my_value
-WARN[0000] No prior notes found!                         MaxDepth=50
+WARN[0000] No prior notes found within maximum depth!    ref=gino_keva
 
 You can continue to add other key/values:
 ```console
