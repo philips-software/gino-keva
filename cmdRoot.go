@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,13 +25,29 @@ var globalFlags = struct {
 	Fetch bool
 }{}
 
-// UpstreamChanged error indicates there's been a change in the upstream preventing a push
+// UpstreamChanged error indicates there's been a change in the upstream preventing a fetch/push without force
 type UpstreamChanged struct {
 	fetchEnabled bool
 }
 
 func (UpstreamChanged) Error() string {
 	return "Upstream has changed in the meanwhile"
+}
+
+func checkIfErrorStringIsUpstreamChanged(s string) bool {
+	return strings.Contains(s, "! [rejected]") || strings.Contains(s, "! [remote rejected]")
+}
+
+// NoRemoteRef error indicates that the remote reference isn't there
+type NoRemoteRef struct {
+}
+
+func (NoRemoteRef) Error() string {
+	return "No remote reference found"
+}
+
+func checkIfErrorStringIsNoRemoteRef(s string) bool {
+	return strings.HasPrefix(s, "fatal: couldn't find remote ref refs/notes/")
 }
 
 // NewRootCommand builds the cobra command that handles our command line tool.
@@ -47,7 +64,21 @@ repository`,
 			notesAccess := git.GetNotesAccessFrom(cmd.Context())
 
 			if globalFlags.Fetch {
-				fetchNotes(notesAccess, globalFlags.NotesRef)
+				err = fetchNotes(notesAccess, globalFlags.NotesRef)
+
+				if _, ok := err.(*UpstreamChanged); ok {
+					log.Warning("Unpushed local changes are now discarded")
+					err = fetchNotesWithForce(notesAccess, globalFlags.NotesRef)
+				}
+
+				if _, ok := err.(*NoRemoteRef); ok {
+					log.WithField("notesRef", globalFlags.NotesRef).Debug("Couldn't find remote ref. Nothing fetched")
+					err = nil
+				}
+
+				if err != nil {
+					log.Error(err.Error())
+				}
 			}
 
 			return err
@@ -64,44 +95,46 @@ repository`,
 	return rootCommand
 }
 
-func fetchNotes(notesAccess git.Notes, notesRef string) (err error) {
-	out, err := notesAccess.Fetch(globalFlags.NotesRef, false)
-
-	if err != nil && strings.HasPrefix(out, "fatal: Couldn't find remote ref refs/notes/") {
-		log.WithField("notesRef", globalFlags.NotesRef).Debug("Couldn't find remote ref. Skipping fetch")
-		err = nil
-	} else if err != nil && strings.Contains(out, "! [rejected]") {
-		log.Warning("Unpushed local changes are now discarded")
-		err = fetchNotesWithForce(notesAccess, notesRef)
-	}
-
-	if err != nil {
-		log.Error(out)
-	}
-	return err
+func fetchNotes(notesAccess git.Notes, notesRef string) error {
+	out, errorCode := notesAccess.Fetch(globalFlags.NotesRef, false)
+	return convertGitOutputToError(out, errorCode)
 }
 
-func fetchNotesWithForce(notesAccess git.Notes, notesRef string) (err error) {
-	out, err := notesAccess.Fetch(globalFlags.NotesRef, true)
-
-	if err != nil {
-		log.Error(out)
-	}
-	return err
+func fetchNotesWithForce(notesAccess git.Notes, notesRef string) error {
+	out, errorCode := notesAccess.Fetch(globalFlags.NotesRef, true)
+	return convertGitOutputToError(out, errorCode)
 }
 
 func pushNotes(notesAccess git.Notes, notesRef string) error {
 	log.Debug("Pushing notes...")
 
-	out, err := notesAccess.Push(globalFlags.NotesRef)
+	out, errorCode := notesAccess.Push(globalFlags.NotesRef)
+	err := convertGitOutputToError(out, errorCode)
+
+	if _, ok := err.(*UpstreamChanged); ok {
+		return err
+	}
 
 	if err != nil {
-		if strings.Contains(out, "! [rejected]") || strings.Contains(out, "! [remote rejected]") {
-			err = &UpstreamChanged{fetchEnabled: globalFlags.Fetch}
-		} else {
-			log.Error(out)
-		}
+		log.Error(out)
 	}
+
+	return err
+}
+
+func convertGitOutputToError(out string, errorCode error) (err error) {
+	if errorCode == nil {
+		return nil
+	}
+
+	if checkIfErrorStringIsNoRemoteRef(out) {
+		err = &NoRemoteRef{}
+	} else if checkIfErrorStringIsUpstreamChanged(out) {
+		err = &UpstreamChanged{fetchEnabled: globalFlags.Fetch}
+	} else {
+		err = errors.New(out)
+	}
+
 	return err
 }
 

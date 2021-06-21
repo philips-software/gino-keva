@@ -307,7 +307,7 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 	var fetchStubNoUpstreamRef = func(string) (response string, err error) {
 		// Mimic error when repository is exhausted without encountering a note
 		err = errors.New("exit status 128")
-		response = "fatal: Couldn't find remote ref refs/notes/FOO"
+		response = "fatal: couldn't find remote ref refs/notes/FOO"
 
 		return response, err
 	}
