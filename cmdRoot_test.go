@@ -148,7 +148,7 @@ type testData struct {
 var testDataEmpty = testData{
 	input:       `{}`,
 	outputRaw:   "{}\n",
-	outputPlain: "\n",
+	outputPlain: "",
 	outputJSON:  "{}\n",
 }
 
