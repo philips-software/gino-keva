@@ -70,12 +70,12 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 		if err != nil {
 			return err
 		}
-		commitHash = strings.TrimSuffix(out, "\n")
+		commitHash = truncateHash(strings.TrimSuffix(out, "\n"), 8)
 	}
 
 	values.Add(key, Value{
 		Data:   value,
-		Source: truncateHash(commitHash, 8),
+		Source: commitHash,
 	})
 
 	noteText, err := convertValuesToOutput(values, "raw")
@@ -89,6 +89,12 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 			log.Fatal(out)
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"key":        key,
+		"value":      value,
+		"commitHash": commitHash,
+	}).Debug("Key/value added succesfully")
 
 	return err
 }
