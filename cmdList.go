@@ -114,7 +114,7 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 
 	case "plain":
 		if values.Count() == 0 {
-			out = "\n"
+			out = ""
 		} else {
 			for k, v := range values.Iterate() {
 				out += fmt.Sprintf("%s=%s\n", k, v)
