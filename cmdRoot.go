@@ -47,7 +47,7 @@ func (NoRemoteRef) Error() string {
 }
 
 func checkIfErrorStringIsNoRemoteRef(s string) bool {
-	return strings.HasPrefix(s, "fatal: couldn't find remote ref refs/notes/")
+	return strings.HasPrefix(strings.ToLower(s), "fatal: couldn't find remote ref refs/notes/")
 }
 
 // NewRootCommand builds the cobra command that handles our command line tool.
