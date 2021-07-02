@@ -1,5 +1,6 @@
 PROJECT_NAME := "gino-keva"
-VERSION := "$(shell git describe --tags)"
+VERSION := "$(shell git describe --tags --match "v*.*.*")"
+LAST_RELEASE_TAG := "$(shell git describe --tags --match "v*.*.*" --abbrev=0 HEAD^)"
 PKG := "github.com/philips-software/$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
@@ -29,6 +30,9 @@ build: dep ## Build the binary file
  
 clean: ## Remove previous build
 	@rm -f $(PROJECT_NAME)/build
- 
+
+release-notes: ## Generate release notes
+	@git log $(LAST_RELEASE_TAG)..HEAD --pretty=format:%s
+	 
 help: ## Display this help screen
 	@grep -h -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'

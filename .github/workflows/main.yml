@@ -1,6 +1,6 @@
 name: Build and Test
 
-# This workflow will run on master branch and on any pull requests targeting master
+# This workflow will run on main branch and on any pull requests targeting main
 on:
   push:
     branches:
@@ -9,46 +9,17 @@ on:
       - 'v*.*.*'
   pull_request:
     branches:
-      - 'master'
+      - 'main'
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    container: golang:1.16-buster
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-
-      - name: Lint Go Code
-        run: |
-          go install honnef.co/go/tools/cmd/staticcheck@2021.1
-          make lint
-
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    container: golang:1.16-buster
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-
-      - name: Run Unit tests
-        run: make test
-
-
   build:
     name: Build
     runs-on: ubuntu-latest
     container: golang:1.16-buster
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-go@v2
         with:
@@ -56,16 +27,25 @@ jobs:
 
       - name: Build
         run: |
+          go install honnef.co/go/tools/cmd/staticcheck@2021.1
           go install github.com/ahmetb/govvv@v0.3.0
-          make build
+          make all
+
+      - name: Generate release notes
+        run: |
+          echo 'RELEASE_NOTES<<EOF' >> $GITHUB_ENV
+          make release-notes >> $GITHUB_ENV
+          echo >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
 
       - name: Create prerelease
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: ${{ github.ref == 'refs/heads/main' }}
         uses: softprops/action-gh-release@v1
         with:
           tag_name: latest
-          name: "Development Build"
+          name: Development Build
           prerelease: true
+          body: ${{ env.RELEASE_NOTES }}
           files: build/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,13 +54,15 @@ jobs:
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v1
         with:
+          body: ${{ env.RELEASE_NOTES }}
           files: build/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   docker:
     name: Docker build/push
-    needs: [lint, test, build]
+    needs:
+      - build
     if: ${{ startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +74,7 @@ jobs:
           latest: true
           fileName: gino-keva
           out-file-path: build/
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: '${{ secrets.GITHUB_TOKEN }}'
       
       - run: chmod +x build/gino-keva
       
