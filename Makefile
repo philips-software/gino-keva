@@ -12,7 +12,7 @@ dep: ## Get the dependencies
 	@go mod tidy
 
 lint: ## Lint Golang files
-	@golint -set_exit_status ${PKG_LIST}
+	@staticcheck ./...
 
 vet: ## Run go vet
 	@go vet ${PKG_LIST}

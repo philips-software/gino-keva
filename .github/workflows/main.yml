@@ -25,7 +25,7 @@ jobs:
 
       - name: Lint Go Code
         run: |
-          go get -u golang.org/x/lint/golint
+          go install honnef.co/go/tools/cmd/staticcheck@2021.1
           make lint
 
   test:
