@@ -91,6 +91,7 @@ repository`,
 	addGetCommandTo(rootCommand)
 	addSetCommandTo(rootCommand)
 	addUnsetCommandTo(rootCommand)
+	addVersionCommandTo(rootCommand)
 
 	return rootCommand
 }

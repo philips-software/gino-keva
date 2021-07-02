@@ -1,8 +1,9 @@
 PROJECT_NAME := "gino-keva"
+VERSION := "$(shell git describe --tags)"
 PKG := "github.com/philips-software/$(PROJECT_NAME)"
 PKG_LIST := $(shell go list ${PKG}/... | grep -v /vendor/)
 GO_FILES := $(shell find . -name '*.go' | grep -v /vendor/ | grep -v _test.go)
- 
+
 .PHONY: all dep lint vet test test-coverage build clean
  
 all: build lint test
@@ -24,7 +25,7 @@ test-coverage: ## Run tests with coverage
 	@cat cover.out >> coverage.txt
 
 build: dep ## Build the binary file
-	@CGO_ENABLED=0 go build -o build/$(PROJECT_NAME) $(PKG)
+	@CGO_ENABLED=0 govvv build -pkg $(PKG)/internal/versioninfo -version $(VERSION) -o build/$(PROJECT_NAME) $(PKG)
  
 clean: ## Remove previous build
 	@rm -f $(PROJECT_NAME)/build

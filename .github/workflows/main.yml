@@ -55,7 +55,9 @@ jobs:
           go-version: 1.16
 
       - name: Build
-        run: make build
+        run: |
+          go install github.com/ahmetb/govvv@v0.3.0
+          make build
 
       - name: Create prerelease
         if: ${{ github.ref == 'refs/heads/master' }}
