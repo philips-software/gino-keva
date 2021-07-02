@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/philips-software/gino-keva/internal/git"
@@ -87,15 +88,23 @@ func findNoteText(notesAccess git.Notes, options *findTextOptions) (string, erro
 	if err == nil {
 		log.WithField("note", out).Debug("Found note")
 		return out, nil
-	} else if strings.HasPrefix(out, "fatal: failed to resolve '") {
+	}
+
+	if strings.HasPrefix(out, "fatal: failed to resolve '") {
 		log.WithField("ref", options.NotesRef).Warning("Reached root commit. No prior notes found")
 		return "", nil
-	} else if strings.HasPrefix(out, "error: no note found for object ") {
-		log.Debug("No note here")
-	} else {
+	}
+
+	r, _ := regexp.Compile("error: no note found for object ([a-f0-9]+).\n")
+	matches := r.FindStringSubmatch(out)
+
+	if len(matches) == 0 {
 		log.Error(out)
 		return "", err
 	}
+
+	options.CommitRef = matches[1]
+	log.WithField("resolvedRef", options.CommitRef).Debug("No notes here.")
 
 	if options.AttemptsLeft == 0 {
 		log.WithField("ref", options.NotesRef).Warning("No prior notes found within maximum depth!")

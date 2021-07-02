@@ -129,7 +129,7 @@ var showStubReturnResponseAtDepth = func(expectedResponse string, depth int) fun
 		default:
 			// No note at this level; mimic expected error and response
 			err = errors.New("exit status 1")
-			response = "error: no note found for object foo"
+			response = "error: no note found for object 0123456789abcdef.\n"
 		}
 
 		depth--
