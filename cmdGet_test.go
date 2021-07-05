@@ -27,12 +27,12 @@ func TestGetCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			ctx := git.ContextWithNotes(context.Background(), &notesStub{
-				addImplementation:          panicStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         dummyStubInputsString,
+			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
+				addNoteImplementation:      panicStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    dummyStubInputsString,
 				revParseHeadImplementation: panicStubInputsNone,
-				showImplementation:         showStubReturnResponseAtDepth(input, 0),
+				showNoteImplementation:     showStubReturnResponseAtDepth(input, 0),
 			})
 			gotOutput, err := executeCommandContext(ctx, root, tc.args...)
 			assert.NoError(t, err)
@@ -67,14 +67,14 @@ func TestGetValue(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			notesAccess := notesStub{
-				addImplementation:          panicStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         dummyStubInputsString,
+			gitWrapper := notesStub{
+				addNoteImplementation:      panicStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    dummyStubInputsString,
 				revParseHeadImplementation: panicStubInputsNone,
-				showImplementation:         showStubReturnResponseAtDepth(input, tc.depth),
+				showNoteImplementation:     showStubReturnResponseAtDepth(input, tc.depth),
 			}
-			gotValue, err := getValue(&notesAccess, "dummyRef", tc.key, maxDepth)
+			gotValue, err := getValue(&gitWrapper, "dummyRef", tc.key, maxDepth)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantValue, gotValue)

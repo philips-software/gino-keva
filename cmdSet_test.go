@@ -35,16 +35,16 @@ func TestSetCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			notesAccess := &notesAddSpy{
+			gitWrapper := &notesAddSpy{
 				revParseHeadResponse: tc.source,
 				showResponse:         tc.start,
 			}
-			ctx := git.ContextWithNotes(context.Background(), notesAccess)
+			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			_, err := executeCommandContext(ctx, root, tc.args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAccess.AddResult)
+			assert.Equal(t, tc.wanted, gitWrapper.AddResult)
 		})
 	}
 }
@@ -89,13 +89,13 @@ func TestKeyValidation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			notesAccess := &notesStub{
-				addImplementation:          dummyStubInputsStringString,
+			gitWrapper := &notesStub{
+				addNoteImplementation:      dummyStubInputsStringString,
 				revParseHeadImplementation: dummyStubInputsNone,
-				showImplementation:         dummyStubInputsStringString,
+				showNoteImplementation:     dummyStubInputsStringString,
 			}
 
-			err := set(notesAccess, "dummyRef", tc.key, "dummyValue", 0)
+			err := set(gitWrapper, "dummyRef", tc.key, "dummyValue", 0)
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
@@ -140,14 +140,14 @@ func TestSet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			notesAccess := &notesAddSpy{
+			gitWrapper := &notesAddSpy{
 				revParseHeadResponse: tc.value.Source,
 				showResponse:         tc.start,
 			}
 
-			err := set(notesAccess, "dummyRef", tc.key, tc.value.Data, 0)
+			err := set(gitWrapper, "dummyRef", tc.key, tc.value.Data, 0)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAccess.AddResult)
+			assert.Equal(t, tc.wanted, gitWrapper.AddResult)
 		})
 	}
 }

@@ -15,18 +15,18 @@ import (
 type notesDummy struct {
 }
 
-// Add test-double
-func (n notesDummy) Add(string, string) (string, error) {
+// AddNote test-double
+func (n notesDummy) AddNote(string, string) (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
-// Fetch test-double
-func (n notesDummy) Fetch(string, bool) (string, error) {
+// FetchNotes test-double
+func (n notesDummy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
-// Push test-double
-func (n notesDummy) Push(string) (string, error) {
+// PushNotes test-double
+func (n notesDummy) PushNotes(string) (string, error) {
 	return "", nil
 }
 
@@ -35,8 +35,8 @@ func (n notesDummy) RevParseHead() (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
-//Show test-double
-func (n *notesDummy) Show(string, string) (response string, err error) {
+//ShowNote test-double
+func (n *notesDummy) ShowNote(string, string) (response string, err error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
@@ -46,19 +46,19 @@ type notesAddSpy struct {
 	showResponse         string
 }
 
-// Add test-double
-func (n *notesAddSpy) Add(_ string, msg string) (string, error) {
+// AddNote test-double
+func (n *notesAddSpy) AddNote(_ string, msg string) (string, error) {
 	n.AddResult = msg // Store input to Add function for test inspection
 	return "", nil
 }
 
-// Fetch test-double
-func (n notesAddSpy) Fetch(string, bool) (string, error) {
+// FetchNotes test-double
+func (n notesAddSpy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
-// Push test-double
-func (n notesAddSpy) Push(string) (string, error) {
+// PushNotes test-double
+func (n notesAddSpy) PushNotes(string) (string, error) {
 	return "", nil
 }
 
@@ -67,32 +67,32 @@ func (n notesAddSpy) RevParseHead() (string, error) {
 	return n.revParseHeadResponse, nil
 }
 
-//Show test-double
-func (n *notesAddSpy) Show(string, string) (string, error) {
+//ShowNote test-double
+func (n *notesAddSpy) ShowNote(string, string) (string, error) {
 	return n.showResponse, nil
 }
 
 type notesStub struct {
-	addImplementation          func(string, string) (string, error)
-	fetchImplementation        func(string) (string, error)
-	pushImplementation         func(string) (string, error)
+	addNoteImplementation      func(string, string) (string, error)
+	fetchNotesImplementation   func(string) (string, error)
+	pushNotesImplementation    func(string) (string, error)
 	revParseHeadImplementation func() (string, error)
-	showImplementation         func(string, string) (string, error)
+	showNoteImplementation     func(string, string) (string, error)
 }
 
-// Add test-double
-func (n notesStub) Add(notesRef string, msg string) (string, error) {
-	return n.addImplementation(notesRef, msg)
+// AddNote test-double
+func (n notesStub) AddNote(notesRef string, msg string) (string, error) {
+	return n.addNoteImplementation(notesRef, msg)
 }
 
-// Fetch test-double
-func (n notesStub) Fetch(notesRef string, force bool) (string, error) {
-	return n.fetchImplementation(notesRef)
+// FetchNotes test-double
+func (n notesStub) FetchNotes(notesRef string, force bool) (string, error) {
+	return n.fetchNotesImplementation(notesRef)
 }
 
-// Push test-double
-func (n notesStub) Push(notesRef string) (string, error) {
-	return n.pushImplementation(notesRef)
+// PushNotes test-double
+func (n notesStub) PushNotes(notesRef string) (string, error) {
+	return n.pushNotesImplementation(notesRef)
 }
 
 // RevParseHead test-double
@@ -100,9 +100,9 @@ func (n notesStub) RevParseHead() (string, error) {
 	return n.revParseHeadImplementation()
 }
 
-//Show test-double calls the stub implementation
-func (n *notesStub) Show(notesRef, hash string) (response string, err error) {
-	return n.showImplementation(notesRef, hash)
+//ShowNote test-double calls the stub implementation
+func (n *notesStub) ShowNote(notesRef, hash string) (response string, err error) {
+	return n.showNoteImplementation(notesRef, hash)
 }
 
 var panicStubInputsNone = func() (string, error) { panic(errors.New("unexpected call to dummy method")) }
@@ -220,7 +220,7 @@ func TestFlagResolution(t *testing.T) {
 			listFlagArgs := []string{"show-flag", "ref"}
 			args := append(listFlagArgs, tc.flagArgs...)
 
-			ctx := git.ContextWithNotes(context.Background(), &notesDummy{})
+			ctx := git.ContextWithGitWrapper(context.Background(), &notesDummy{})
 			gotOutput, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
@@ -249,12 +249,12 @@ func TestFetchFlag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var fetchCalled bool
-			notesAccess := &notesStub{
-				fetchImplementation: spyInputsString(&fetchCalled),
-				pushImplementation:  dummyStubInputsString,
-				showImplementation:  dummyStubInputsStringString,
+			gitWrapper := &notesStub{
+				fetchNotesImplementation: spyInputsString(&fetchCalled),
+				pushNotesImplementation:  dummyStubInputsString,
+				showNoteImplementation:   dummyStubInputsStringString,
 			}
-			ctx := git.ContextWithNotes(context.Background(), notesAccess)
+			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			root := NewRootCommand()
 			_, err := executeCommandContext(ctx, root, tc.args...)
@@ -285,14 +285,14 @@ func TestPushFlag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var pushCalled bool
-			notesAccess := &notesStub{
-				addImplementation:          dummyStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         spyInputsString(&pushCalled),
+			gitWrapper := &notesStub{
+				addNoteImplementation:      dummyStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    spyInputsString(&pushCalled),
 				revParseHeadImplementation: dummyStubInputsNone,
-				showImplementation:         dummyStubInputsStringString,
+				showNoteImplementation:     dummyStubInputsStringString,
 			}
-			ctx := git.ContextWithNotes(context.Background(), notesAccess)
+			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			root := NewRootCommand()
 			_, err := executeCommandContext(ctx, root, tc.args...)
@@ -314,14 +314,14 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 
 	t.Run("Fetch without upstream notesref doesn't result in error", func(t *testing.T) {
 		root := NewRootCommand()
-		notesAccess := &notesStub{
-			addImplementation:          panicStubInputsStringString,
-			fetchImplementation:        fetchStubNoUpstreamRef,
-			pushImplementation:         dummyStubInputsString,
+		gitWrapper := &notesStub{
+			addNoteImplementation:      panicStubInputsStringString,
+			fetchNotesImplementation:   fetchStubNoUpstreamRef,
+			pushNotesImplementation:    dummyStubInputsString,
 			revParseHeadImplementation: panicStubInputsNone,
-			showImplementation:         dummyStubInputsStringString,
+			showNoteImplementation:     dummyStubInputsStringString,
 		}
-		ctx := git.ContextWithNotes(context.Background(), notesAccess)
+		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 		args := []string{"list"}
 		gotOutput, err := executeCommandContext(ctx, root, args...)

@@ -18,15 +18,15 @@ func addUnsetCommandTo(root *cobra.Command) {
 		Long:  `Unset a key`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			key := args[0]
-			notesAccess := git.GetNotesAccessFrom(cmd.Context())
+			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
-			err := unset(notesAccess, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			err := unset(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
 			if err != nil {
 				return err
 			}
 
 			if push {
-				err = pushNotes(notesAccess, globalFlags.NotesRef)
+				err = pushNotes(gitWrapper, globalFlags.NotesRef)
 			}
 
 			return err
@@ -38,14 +38,14 @@ func addUnsetCommandTo(root *cobra.Command) {
 	root.AddCommand(unsetCommand)
 }
 
-func unset(notesAccess git.Notes, notesRef string, key string, maxDepth int) error {
+func unset(gitWrapper git.Wrapper, notesRef string, key string, maxDepth int) error {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {
 		return err
 	}
 
-	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
+	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func unset(notesAccess git.Notes, notesRef string, key string, maxDepth int) err
 	}
 
 	{
-		out, err := notesAccess.Add(notesRef, noteText)
+		out, err := gitWrapper.AddNote(notesRef, noteText)
 		if err != nil {
 			log.Fatal(out)
 		}

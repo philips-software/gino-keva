@@ -13,26 +13,26 @@ import (
 	"github.com/ldez/go-git-cmd-wrapper/v2/revparse"
 )
 
-// Notes interface
-type Notes interface {
-	Add(notesRef string, msg string) (string, error)
-	Fetch(notesRef string, force bool) (string, error)
-	Push(notesRef string) (string, error)
+// Wrapper interface
+type Wrapper interface {
+	AddNote(notesRef, msg string) (string, error)
+	FetchNotes(notesRef string, force bool) (string, error)
+	PushNotes(notesRef string) (string, error)
 	RevParseHead() (string, error)
-	Show(notesRef string, hash string) (string, error)
+	ShowNote(notesRef, hash string) (string, error)
 }
 
-// GoGitCmdWrapper implements the Notes interface using go-git-cmd-wrapper
+// GoGitCmdWrapper implements the Wrapper interface using go-git-cmd-wrapper
 type GoGitCmdWrapper struct {
 }
 
-// Add sets/overwrites a note
-func (g GoGitCmdWrapper) Add(notesRef string, msg string) (string, error) {
+// AddNote sets/overwrites a note
+func (GoGitCmdWrapper) AddNote(notesRef, msg string) (string, error) {
 	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Add("", notes.Message(msg), notes.Force))
 }
 
-// Fetch notes
-func (g GoGitCmdWrapper) Fetch(notesRef string, force bool) (string, error) {
+// FetchNotes notes
+func (GoGitCmdWrapper) FetchNotes(notesRef string, force bool) (string, error) {
 	refSpec := fmt.Sprintf("refs/notes/%v:refs/notes/%v", notesRef, notesRef)
 	if force {
 		// Add + to force fetch
@@ -41,8 +41,8 @@ func (g GoGitCmdWrapper) Fetch(notesRef string, force bool) (string, error) {
 	return gitCmdWrapper.Fetch(fetch.NoTags, fetch.Remote("origin"), fetch.RefSpec(refSpec))
 }
 
-// Push notes
-func (g GoGitCmdWrapper) Push(notesRef string) (string, error) {
+// PushNotes notes
+func (GoGitCmdWrapper) PushNotes(notesRef string) (string, error) {
 	refSpec := fmt.Sprintf("refs/notes/%v:refs/notes/%v", notesRef, notesRef)
 	return gitCmdWrapper.Push(push.Remote("origin"), push.RefSpec(refSpec))
 }
@@ -52,8 +52,8 @@ func (g GoGitCmdWrapper) RevParseHead() (string, error) {
 	return gitCmdWrapper.RevParse(revparse.Args("HEAD"))
 }
 
-// Show returns the note for provided hash, or error if there is none
-func (g GoGitCmdWrapper) Show(notesRef string, hash string) (string, error) {
+// ShowNote returns the note for provided hash, or error if there is none
+func (GoGitCmdWrapper) ShowNote(notesRef, hash string) (string, error) {
 	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Show(hash))
 }
 
@@ -63,17 +63,17 @@ var (
 	notesContextKey contextKey = "gitNotesKey"
 )
 
-// ContextWithNotes returns a new context with the notes object added
-func ContextWithNotes(ctx context.Context, notes Notes) context.Context {
-	return context.WithValue(ctx, notesContextKey, notes)
+// ContextWithGitWrapper returns a new context with the git wrapper object added
+func ContextWithGitWrapper(ctx context.Context, gitWrapper Wrapper) context.Context {
+	return context.WithValue(ctx, notesContextKey, gitWrapper)
 }
 
-// GetNotesAccessFrom returns the notes object from the provided context
-func GetNotesAccessFrom(ctx context.Context) Notes {
+// GetGitWrapperFrom returns the git wrapper object from the provided context
+func GetGitWrapperFrom(ctx context.Context) Wrapper {
 	v := ctx.Value(notesContextKey)
 	if v == nil {
 		log.Fatal("No Notes interface found in context")
 	}
 
-	return v.(Notes)
+	return v.(Wrapper)
 }

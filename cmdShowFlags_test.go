@@ -12,7 +12,7 @@ func TestShowFlags(t *testing.T) {
 	t.Run("Error when trying to show unknown flag", func(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"show-flag", "Unknown_Flag"}
-		ctx := git.ContextWithNotes(context.Background(), &notesDummy{})
+		ctx := git.ContextWithGitWrapper(context.Background(), &notesDummy{})
 
 		_, err := executeCommandContext(ctx, root, args...)
 
@@ -21,7 +21,7 @@ func TestShowFlags(t *testing.T) {
 	t.Run("Able to retrieve integer flags", func(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"show-flag", "max-depth", "--max-depth", "42"}
-		ctx := git.ContextWithNotes(context.Background(), &notesDummy{})
+		ctx := git.ContextWithGitWrapper(context.Background(), &notesDummy{})
 
 		output, err := executeCommandContext(ctx, root, args...)
 

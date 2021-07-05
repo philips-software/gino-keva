@@ -32,15 +32,15 @@ func addSetCommandTo(root *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			key := args[0]
 			value := args[1]
-			notesAccess := git.GetNotesAccessFrom(cmd.Context())
+			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
-			err := set(notesAccess, globalFlags.NotesRef, key, value, globalFlags.MaxDepth)
+			err := set(gitWrapper, globalFlags.NotesRef, key, value, globalFlags.MaxDepth)
 			if err != nil {
 				return err
 			}
 
 			if push {
-				err = pushNotes(notesAccess, globalFlags.NotesRef)
+				err = pushNotes(gitWrapper, globalFlags.NotesRef)
 			}
 
 			return err
@@ -52,21 +52,21 @@ func addSetCommandTo(root *cobra.Command) {
 	root.AddCommand(setCommand)
 }
 
-func set(notesAccess git.Notes, notesRef string, key string, value string, maxDepth int) (err error) {
+func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxDepth int) (err error) {
 	key = sanitizeKey(key)
 	err = validateKey(key)
 	if err != nil {
 		return err
 	}
 
-	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
+	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return err
 	}
 
 	var commitHash string
 	{
-		out, err := notesAccess.RevParseHead()
+		out, err := gitWrapper.RevParseHead()
 		if err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ func set(notesAccess git.Notes, notesRef string, key string, value string, maxDe
 	}
 
 	{
-		out, err := notesAccess.Add(notesRef, noteText)
+		out, err := gitWrapper.AddNote(notesRef, noteText)
 		if err != nil {
 			log.Fatal(out)
 		}

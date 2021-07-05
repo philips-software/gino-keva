@@ -30,9 +30,9 @@ func addListCommandTo(root *cobra.Command) {
 		Short: "List",
 		Long:  `List all of the keys and values currently stored`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			notesAccess := git.GetNotesAccessFrom(cmd.Context())
+			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
-			out, err := getListOutput(notesAccess, globalFlags.NotesRef, globalFlags.MaxDepth, outputFormat)
+			out, err := getListOutput(gitWrapper, globalFlags.NotesRef, globalFlags.MaxDepth, outputFormat)
 			if err != nil {
 				return err
 			}
@@ -53,8 +53,8 @@ type findTextOptions struct {
 	NotesRef     string
 }
 
-func getListOutput(notesAccess git.Notes, notesRef string, maxDepth int, outputFormat string) (out string, err error) {
-	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
+func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth int, outputFormat string) (out string, err error) {
+	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return "", err
 	}
@@ -62,8 +62,8 @@ func getListOutput(notesAccess git.Notes, notesRef string, maxDepth int, outputF
 	return convertValuesToOutput(values, outputFormat)
 }
 
-func getNoteValues(notesAccess git.Notes, notesRef string, maxDepth int) (values *Values, err error) {
-	noteText, err := findNoteText(notesAccess, &findTextOptions{
+func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth int) (values *Values, err error) {
+	noteText, err := findNoteText(gitWrapper, &findTextOptions{
 		AttemptsLeft: maxDepth,
 		CommitRef:    "HEAD",
 		NotesRef:     notesRef,
@@ -81,10 +81,10 @@ func getNoteValues(notesAccess git.Notes, notesRef string, maxDepth int) (values
 	return values, err
 }
 
-func findNoteText(notesAccess git.Notes, options *findTextOptions) (string, error) {
+func findNoteText(gitWrapper git.Wrapper, options *findTextOptions) (string, error) {
 	log.WithField("hash", options.CommitRef).Debug("Looking for git notes...")
 
-	out, err := notesAccess.Show(options.NotesRef, options.CommitRef)
+	out, err := gitWrapper.ShowNote(options.NotesRef, options.CommitRef)
 	if err == nil {
 		log.WithField("note", out).Debug("Found note")
 		return out, nil
@@ -115,7 +115,7 @@ func findNoteText(notesAccess git.Notes, options *findTextOptions) (string, erro
 	options.CommitRef = fmt.Sprintf("%v^", options.CommitRef)
 	options.AttemptsLeft--
 
-	return findNoteText(notesAccess, options)
+	return findNoteText(gitWrapper, options)
 }
 
 func convertValuesToOutput(values *Values, outputFlag string) (out string, err error) {

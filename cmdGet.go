@@ -15,8 +15,8 @@ func addGetCommandTo(root *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			key := args[0]
 
-			notesAccess := git.GetNotesAccessFrom(cmd.Context())
-			out, err := getValue(notesAccess, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+			out, err := getValue(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
 			if err != nil {
 				return err
 			}
@@ -30,14 +30,14 @@ func addGetCommandTo(root *cobra.Command) {
 	root.AddCommand(getCommand)
 }
 
-func getValue(notesAccess git.Notes, notesRef string, key string, maxDepth int) (string, error) {
+func getValue(gitWrapper git.Wrapper, notesRef string, key string, maxDepth int) (string, error) {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {
 		return "", err
 	}
 
-	values, err := getNoteValues(notesAccess, notesRef, maxDepth)
+	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return "", err
 	}

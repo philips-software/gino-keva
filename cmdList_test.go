@@ -39,12 +39,12 @@ func TestListCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			ctx := git.ContextWithNotes(context.Background(), &notesStub{
-				addImplementation:          panicStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         dummyStubInputsString,
+			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
+				addNoteImplementation:      panicStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    dummyStubInputsString,
 				revParseHeadImplementation: panicStubInputsNone,
-				showImplementation:         showStubReturnResponseAtDepth(input, 0),
+				showNoteImplementation:     showStubReturnResponseAtDepth(input, 0),
 			})
 			gotOutput, err := executeCommandContext(ctx, root, tc.args...)
 			assert.NoError(t, err)
@@ -81,14 +81,14 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			notesAccess := notesStub{
-				addImplementation:          panicStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         dummyStubInputsString,
+			gitWrapper := notesStub{
+				addNoteImplementation:      panicStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    dummyStubInputsString,
 				revParseHeadImplementation: panicStubInputsNone,
-				showImplementation:         showStubReturnResponseAtDepth(input, 0),
+				showNoteImplementation:     showStubReturnResponseAtDepth(input, 0),
 			}
-			gotOutput, err := getListOutput(&notesAccess, "dummyRef", 0, tc.outputFormat)
+			gotOutput, err := getListOutput(&gitWrapper, "dummyRef", 0, tc.outputFormat)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantText, gotOutput)
@@ -107,14 +107,14 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 
 	t.Run("Small repository without prior notes doesn't result in error", func(t *testing.T) {
 		root := NewRootCommand()
-		notesAccess := &notesStub{
-			addImplementation:          panicStubInputsStringString,
-			fetchImplementation:        dummyStubInputsString,
-			pushImplementation:         dummyStubInputsString,
+		gitWrapper := &notesStub{
+			addNoteImplementation:      panicStubInputsStringString,
+			fetchNotesImplementation:   dummyStubInputsString,
+			pushNotesImplementation:    dummyStubInputsString,
 			revParseHeadImplementation: panicStubInputsNone,
-			showImplementation:         showStubExhaustedRepo,
+			showNoteImplementation:     showStubExhaustedRepo,
 		}
-		ctx := git.ContextWithNotes(context.Background(), notesAccess)
+		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 		args := []string{"list"}
 		gotOutput, err := executeCommandContext(ctx, root, args...)
@@ -126,11 +126,11 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 
 func TestInvalidOutputFormat(t *testing.T) {
 	t.Run("InvalidOutputFormat error raised when specifying invalid output format", func(t *testing.T) {
-		notesAccess := notesStub{
-			showImplementation: dummyStubInputsStringString,
+		gitWrapper := notesStub{
+			showNoteImplementation: dummyStubInputsStringString,
 		}
 
-		_, err := getListOutput(&notesAccess, "dummyRef", 0, "invalid format")
+		_, err := getListOutput(&gitWrapper, "dummyRef", 0, "invalid format")
 		if assert.Error(t, err) {
 			assert.IsType(t, &InvalidOutputFormat{}, err)
 		}
@@ -171,14 +171,14 @@ func TestGetListOutputTestDataKeyValue(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			notesAccess := notesStub{
-				addImplementation:          panicStubInputsStringString,
-				fetchImplementation:        dummyStubInputsString,
-				pushImplementation:         dummyStubInputsString,
+			gitWrapper := notesStub{
+				addNoteImplementation:      panicStubInputsStringString,
+				fetchNotesImplementation:   dummyStubInputsString,
+				pushNotesImplementation:    dummyStubInputsString,
 				revParseHeadImplementation: panicStubInputsNone,
-				showImplementation:         showStubReturnResponseAtDepth(input, tc.depth),
+				showNoteImplementation:     showStubReturnResponseAtDepth(input, tc.depth),
 			}
-			gotOutput, err := getListOutput(&notesAccess, "dummyRef", maxDepth, "plain")
+			gotOutput, err := getListOutput(&gitWrapper, "dummyRef", maxDepth, "plain")
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantText, gotOutput)

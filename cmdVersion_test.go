@@ -14,7 +14,7 @@ func TestVersion(t *testing.T) {
 	t.Run("Version command returns an empty version string", func(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"version"}
-		ctx := git.ContextWithNotes(context.Background(), &notesDummy{})
+		ctx := git.ContextWithGitWrapper(context.Background(), &notesDummy{})
 
 		out, err := executeCommandContext(ctx, root, args...)
 

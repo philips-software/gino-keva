@@ -61,14 +61,14 @@ repository`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			initializeConfig(cmd)
 
-			notesAccess := git.GetNotesAccessFrom(cmd.Context())
+			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
-				err = fetchNotes(notesAccess, globalFlags.NotesRef)
+				err = fetchNotes(gitWrapper, globalFlags.NotesRef)
 
 				if _, ok := err.(*UpstreamChanged); ok {
 					log.Warning("Unpushed local changes are now discarded")
-					err = fetchNotesWithForce(notesAccess, globalFlags.NotesRef)
+					err = fetchNotesWithForce(gitWrapper, globalFlags.NotesRef)
 				}
 
 				if _, ok := err.(*NoRemoteRef); ok {
@@ -96,20 +96,20 @@ repository`,
 	return rootCommand
 }
 
-func fetchNotes(notesAccess git.Notes, notesRef string) error {
-	out, errorCode := notesAccess.Fetch(globalFlags.NotesRef, false)
+func fetchNotes(gitWrapper git.Wrapper, notesRef string) error {
+	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, false)
 	return convertGitOutputToError(out, errorCode)
 }
 
-func fetchNotesWithForce(notesAccess git.Notes, notesRef string) error {
-	out, errorCode := notesAccess.Fetch(globalFlags.NotesRef, true)
+func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string) error {
+	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, true)
 	return convertGitOutputToError(out, errorCode)
 }
 
-func pushNotes(notesAccess git.Notes, notesRef string) error {
+func pushNotes(gitWrapper git.Wrapper, notesRef string) error {
 	log.Debug("Pushing notes...")
 
-	out, errorCode := notesAccess.Push(globalFlags.NotesRef)
+	out, errorCode := gitWrapper.PushNotes(globalFlags.NotesRef)
 	err := convertGitOutputToError(out, errorCode)
 
 	if _, ok := err.(*UpstreamChanged); ok {
