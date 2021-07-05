@@ -25,6 +25,11 @@ func (n notesDummy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
+// GetCommitHashes test-double
+func (n notesDummy) GetCommitHashes() (string, error) {
+	return "", nil
+}
+
 // PushNotes test-double
 func (n notesDummy) PushNotes(string) (string, error) {
 	return "", nil
@@ -57,6 +62,11 @@ func (n notesAddSpy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
+// GetCommitHashes test-double
+func (n notesAddSpy) GetCommitHashes() (string, error) {
+	return "", nil
+}
+
 // PushNotes test-double
 func (n notesAddSpy) PushNotes(string) (string, error) {
 	return "", nil
@@ -73,11 +83,12 @@ func (n *notesAddSpy) ShowNote(string, string) (string, error) {
 }
 
 type notesStub struct {
-	addNoteImplementation      func(string, string) (string, error)
-	fetchNotesImplementation   func(string) (string, error)
-	pushNotesImplementation    func(string) (string, error)
-	revParseHeadImplementation func() (string, error)
-	showNoteImplementation     func(string, string) (string, error)
+	addNoteImplementation         func(string, string) (string, error)
+	fetchNotesImplementation      func(string) (string, error)
+	getCommitHashesImplementation func() (string, error)
+	pushNotesImplementation       func(string) (string, error)
+	revParseHeadImplementation    func() (string, error)
+	showNoteImplementation        func(string, string) (string, error)
 }
 
 // AddNote test-double
@@ -88,6 +99,11 @@ func (n notesStub) AddNote(notesRef string, msg string) (string, error) {
 // FetchNotes test-double
 func (n notesStub) FetchNotes(notesRef string, force bool) (string, error) {
 	return n.fetchNotesImplementation(notesRef)
+}
+
+// GetCommitHashes test-double
+func (n notesStub) GetCommitHashes() (string, error) {
+	return n.getCommitHashesImplementation()
 }
 
 // PushNotes test-double
@@ -105,8 +121,6 @@ func (n *notesStub) ShowNote(notesRef, hash string) (response string, err error)
 	return n.showNoteImplementation(notesRef, hash)
 }
 
-var panicStubInputsNone = func() (string, error) { panic(errors.New("unexpected call to dummy method")) }
-var panicStubInputsStringString = func(string, string) (string, error) { panic(errors.New("unexpected call to dummy method")) }
 var dummyStubInputsNone = func() (string, error) { return "", nil }
 var dummyStubInputsString = func(string) (string, error) { return "", nil }
 var dummyStubInputsStringString = func(string, string) (string, error) { return "", nil }
@@ -315,11 +329,9 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 	t.Run("Fetch without upstream notesref doesn't result in error", func(t *testing.T) {
 		root := NewRootCommand()
 		gitWrapper := &notesStub{
-			addNoteImplementation:      panicStubInputsStringString,
-			fetchNotesImplementation:   fetchStubNoUpstreamRef,
-			pushNotesImplementation:    dummyStubInputsString,
-			revParseHeadImplementation: panicStubInputsNone,
-			showNoteImplementation:     dummyStubInputsStringString,
+			fetchNotesImplementation: fetchStubNoUpstreamRef,
+			pushNotesImplementation:  dummyStubInputsString,
+			showNoteImplementation:   dummyStubInputsStringString,
 		}
 		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
