@@ -98,24 +98,31 @@ repository`,
 
 func fetchNotes(gitWrapper git.Wrapper, notesRef string) error {
 	log.Debug("Fetching notes...")
+	defer log.Debug("Done.")
+
 	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, false)
 	return convertGitOutputToError(out, errorCode)
 }
 
 func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string) error {
 	log.Debug("Fetching notes with force...")
+	defer log.Debug("Done.")
+
 	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, true)
 	return convertGitOutputToError(out, errorCode)
 }
 
 func pruneNotes(gitWrapper git.Wrapper, notesRef string) error {
 	log.Debug("Pruning notes...")
+	defer log.Debug("Done.")
+
 	out, errorCode := gitWrapper.NotesPrune(globalFlags.NotesRef)
 	return convertGitOutputToError(out, errorCode)
 }
 
 func pushNotes(gitWrapper git.Wrapper, notesRef string) error {
 	log.Debug("Pushing notes...")
+	defer log.Debug("Done.")
 
 	out, errorCode := gitWrapper.PushNotes(globalFlags.NotesRef)
 	err := convertGitOutputToError(out, errorCode)
