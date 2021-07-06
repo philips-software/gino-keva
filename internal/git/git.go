@@ -58,6 +58,7 @@ func (GoGitCmdWrapper) NotesList(notesRef string) (string, error) {
 	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.List(""))
 }
 
+// NotesPrune prunes unreachable notes
 func (GoGitCmdWrapper) NotesPrune(notesRef string) (string, error) {
 	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Prune())
 }

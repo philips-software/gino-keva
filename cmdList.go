@@ -117,9 +117,9 @@ func findNoteText(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (noteT
 func limitStringSlice(slice []string, limit uint) []string {
 	if len(slice) <= int(limit) {
 		return slice
-	} else {
-		return slice[:limit]
 	}
+
+	return slice[:limit]
 }
 
 func convertValuesToOutput(values *Values, outputFlag string) (out string, err error) {

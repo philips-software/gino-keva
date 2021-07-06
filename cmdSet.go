@@ -99,7 +99,7 @@ func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxD
 		"key":        key,
 		"value":      value,
 		"commitHash": commitHash,
-	}).Debug("Key/value added succesfully")
+	}).Debug("Key/value added successfully")
 
 	return err
 }
