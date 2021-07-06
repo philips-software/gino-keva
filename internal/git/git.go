@@ -20,6 +20,7 @@ type Wrapper interface {
 	LogCommits(maxCount uint) (string, error)
 	NotesAdd(notesRef, msg string) (string, error)
 	NotesList(notesRef string) (string, error)
+	NotesPrune(notesRef string) (string, error)
 	NotesShow(notesRef, hash string) (string, error)
 	PushNotes(notesRef string) (string, error)
 	RevParseHead() (string, error)
@@ -55,6 +56,10 @@ func (GoGitCmdWrapper) NotesAdd(notesRef, msg string) (string, error) {
 // NotesList returns all the notes
 func (GoGitCmdWrapper) NotesList(notesRef string) (string, error) {
 	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.List(""))
+}
+
+func (GoGitCmdWrapper) NotesPrune(notesRef string) (string, error) {
+	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Prune())
 }
 
 // NotesShow returns the note for provided hash, or error if there is none

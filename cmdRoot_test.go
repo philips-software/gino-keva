@@ -21,32 +21,37 @@ func (n notesDummy) FetchNotes(string, bool) (string, error) {
 }
 
 // LogCommits test-double
-func (n notesDummy) LogCommits(uint) (string, error) {
+func (notesDummy) LogCommits(uint) (string, error) {
 	return "", nil
 }
 
 // NotesAdd test-double
-func (n notesDummy) NotesAdd(string, string) (string, error) {
+func (notesDummy) NotesAdd(string, string) (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
 //NotesList test-double
-func (n *notesDummy) NotesList(string) (response string, err error) {
+func (notesDummy) NotesList(string) (response string, err error) {
+	panic(errors.New("unexpected call to dummy method"))
+}
+
+// NotesPrune dummy
+func (notesDummy) NotesPrune(string) (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
 //NotesShow test-double
-func (n *notesDummy) NotesShow(string, string) (response string, err error) {
+func (notesDummy) NotesShow(string, string) (response string, err error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
 // PushNotes test-double
-func (n notesDummy) PushNotes(string) (string, error) {
+func (notesDummy) PushNotes(string) (string, error) {
 	return "", nil
 }
 
 // RevParseHead test-double
-func (n notesDummy) RevParseHead() (string, error) {
+func (notesDummy) RevParseHead() (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
@@ -68,8 +73,13 @@ func (n *notesAddSpy) NotesAdd(_ string, msg string) (string, error) {
 }
 
 // NotesList test-double
-func (n *notesAddSpy) NotesList(string) (string, error) {
+func (notesAddSpy) NotesList(string) (string, error) {
 	return simpleNotesListResponse, nil
+}
+
+// NotesPrune dummy
+func (notesAddSpy) NotesPrune(string) (string, error) {
+	return "", nil
 }
 
 //NotesShow test-double
@@ -78,12 +88,12 @@ func (n *notesAddSpy) NotesShow(string, string) (string, error) {
 }
 
 // LogCommits test-double
-func (n notesAddSpy) LogCommits(uint) (string, error) {
+func (notesAddSpy) LogCommits(uint) (string, error) {
 	return simpleLogCommitsResponse, nil
 }
 
 // PushNotes test-double
-func (n notesAddSpy) PushNotes(string) (string, error) {
+func (notesAddSpy) PushNotes(string) (string, error) {
 	return "", nil
 }
 
@@ -126,6 +136,11 @@ func (n notesStub) NotesAdd(notesRef string, msg string) (string, error) {
 // NotesList test-double
 func (n notesStub) NotesList(notesRef string) (string, error) {
 	return n.notesListImplementation(notesRef)
+}
+
+// NotesPrune dummy
+func (notesStub) NotesPrune(string) (string, error) {
+	return "", nil
 }
 
 //NotesShow test-double calls the stub implementation

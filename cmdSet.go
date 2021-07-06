@@ -39,6 +39,11 @@ func addSetCommandTo(root *cobra.Command) {
 				return err
 			}
 
+			err = pruneNotes(gitWrapper, globalFlags.NotesRef)
+			if err != nil {
+				return err
+			}
+
 			if push {
 				err = pushNotes(gitWrapper, globalFlags.NotesRef)
 			}
