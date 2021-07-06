@@ -28,9 +28,11 @@ func TestGetCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
 			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
-				fetchNotesImplementation: dummyStubInputsString,
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   showStubReturnResponseAtDepth(input, 0),
+				fetchNotesImplementation: dummyStubArgsString,
+				pushNotesImplementation:  dummyStubArgsString,
+				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
+				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
+				notesShowImplementation:  responseStubArgsStringString(input),
 			})
 			gotOutput, err := executeCommandContext(ctx, root, tc.args...)
 			assert.NoError(t, err)
@@ -41,12 +43,12 @@ func TestGetCommand(t *testing.T) {
 
 func TestGetValue(t *testing.T) {
 	input := testDataKeyValue.input
-	maxDepth := 5
+	maxDepth := uint(5)
 
 	testCases := []struct {
 		name      string
 		key       string
-		depth     int
+		depth     uint
 		wantValue string
 	}{
 		{
@@ -66,9 +68,11 @@ func TestGetValue(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gitWrapper := notesStub{
-				fetchNotesImplementation: dummyStubInputsString,
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   showStubReturnResponseAtDepth(input, tc.depth),
+				fetchNotesImplementation: dummyStubArgsString,
+				pushNotesImplementation:  dummyStubArgsString,
+				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
+				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
+				notesShowImplementation:  responseStubArgsStringString(input),
 			}
 			gotValue, err := getValue(&gitWrapper, "dummyRef", tc.key, maxDepth)
 

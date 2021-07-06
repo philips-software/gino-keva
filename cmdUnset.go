@@ -38,7 +38,7 @@ func addUnsetCommandTo(root *cobra.Command) {
 	root.AddCommand(unsetCommand)
 }
 
-func unset(gitWrapper git.Wrapper, notesRef string, key string, maxDepth int) error {
+func unset(gitWrapper git.Wrapper, notesRef string, key string, maxDepth uint) error {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {
@@ -58,7 +58,7 @@ func unset(gitWrapper git.Wrapper, notesRef string, key string, maxDepth int) er
 	}
 
 	{
-		out, err := gitWrapper.AddNote(notesRef, noteText)
+		out, err := gitWrapper.NotesAdd(notesRef, noteText)
 		if err != nil {
 			log.Fatal(out)
 		}

@@ -15,19 +15,29 @@ import (
 type notesDummy struct {
 }
 
-// AddNote test-double
-func (n notesDummy) AddNote(string, string) (string, error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
 // FetchNotes test-double
 func (n notesDummy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
-// GetCommitHashes test-double
-func (n notesDummy) GetCommitHashes() (string, error) {
+// LogCommits test-double
+func (n notesDummy) LogCommits(uint) (string, error) {
 	return "", nil
+}
+
+// NotesAdd test-double
+func (n notesDummy) NotesAdd(string, string) (string, error) {
+	panic(errors.New("unexpected call to dummy method"))
+}
+
+//NotesList test-double
+func (n *notesDummy) NotesList(string) (response string, err error) {
+	panic(errors.New("unexpected call to dummy method"))
+}
+
+//NotesShow test-double
+func (n *notesDummy) NotesShow(string, string) (response string, err error) {
+	panic(errors.New("unexpected call to dummy method"))
 }
 
 // PushNotes test-double
@@ -40,21 +50,10 @@ func (n notesDummy) RevParseHead() (string, error) {
 	panic(errors.New("unexpected call to dummy method"))
 }
 
-//ShowNote test-double
-func (n *notesDummy) ShowNote(string, string) (response string, err error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
 type notesAddSpy struct {
 	AddResult            string
 	revParseHeadResponse string
 	showResponse         string
-}
-
-// AddNote test-double
-func (n *notesAddSpy) AddNote(_ string, msg string) (string, error) {
-	n.AddResult = msg // Store input to Add function for test inspection
-	return "", nil
 }
 
 // FetchNotes test-double
@@ -62,9 +61,25 @@ func (n notesAddSpy) FetchNotes(string, bool) (string, error) {
 	return "", nil
 }
 
-// GetCommitHashes test-double
-func (n notesAddSpy) GetCommitHashes() (string, error) {
+// NotesAdd test-double
+func (n *notesAddSpy) NotesAdd(_ string, msg string) (string, error) {
+	n.AddResult = msg // Store input to Add function for test inspection
 	return "", nil
+}
+
+// NotesList test-double
+func (n *notesAddSpy) NotesList(string) (string, error) {
+	return simpleNotesListResponse, nil
+}
+
+//NotesShow test-double
+func (n *notesAddSpy) NotesShow(string, string) (string, error) {
+	return n.showResponse, nil
+}
+
+// LogCommits test-double
+func (n notesAddSpy) LogCommits(uint) (string, error) {
+	return simpleLogCommitsResponse, nil
 }
 
 // PushNotes test-double
@@ -77,33 +92,45 @@ func (n notesAddSpy) RevParseHead() (string, error) {
 	return n.revParseHeadResponse, nil
 }
 
-//ShowNote test-double
-func (n *notesAddSpy) ShowNote(string, string) (string, error) {
-	return n.showResponse, nil
-}
-
 type notesStub struct {
-	addNoteImplementation         func(string, string) (string, error)
-	fetchNotesImplementation      func(string) (string, error)
-	getCommitHashesImplementation func() (string, error)
-	pushNotesImplementation       func(string) (string, error)
-	revParseHeadImplementation    func() (string, error)
-	showNoteImplementation        func(string, string) (string, error)
+	fetchNotesImplementation   func(string) (string, error)
+	logCommitsImplementation   func() (string, error)
+	notesAddImplementation     func(string, string) (string, error)
+	notesListImplementation    func(string) (string, error)
+	notesShowImplementation    func(string, string) (string, error)
+	pushNotesImplementation    func(string) (string, error)
+	revParseHeadImplementation func() (string, error)
 }
 
-// AddNote test-double
-func (n notesStub) AddNote(notesRef string, msg string) (string, error) {
-	return n.addNoteImplementation(notesRef, msg)
-}
+// Provide simple implementations for logCommits and notesList for testing purposes
+var (
+	simpleLogCommitsResponse = "DUMMY_REFERENCE\n"
+	simpleNotesListResponse  = "NOTES_OBJECT_ID DUMMY_REFERENCE\n"
+)
 
 // FetchNotes test-double
 func (n notesStub) FetchNotes(notesRef string, force bool) (string, error) {
 	return n.fetchNotesImplementation(notesRef)
 }
 
-// GetCommitHashes test-double
-func (n notesStub) GetCommitHashes() (string, error) {
-	return n.getCommitHashesImplementation()
+// LogCommits test-double
+func (n notesStub) LogCommits(uint) (string, error) {
+	return n.logCommitsImplementation()
+}
+
+// NotesAdd test-double
+func (n notesStub) NotesAdd(notesRef string, msg string) (string, error) {
+	return n.notesAddImplementation(notesRef, msg)
+}
+
+// NotesList test-double
+func (n notesStub) NotesList(notesRef string) (string, error) {
+	return n.notesListImplementation(notesRef)
+}
+
+//NotesShow test-double calls the stub implementation
+func (n *notesStub) NotesShow(notesRef, hash string) (response string, err error) {
+	return n.notesShowImplementation(notesRef, hash)
 }
 
 // PushNotes test-double
@@ -116,39 +143,33 @@ func (n notesStub) RevParseHead() (string, error) {
 	return n.revParseHeadImplementation()
 }
 
-//ShowNote test-double calls the stub implementation
-func (n *notesStub) ShowNote(notesRef, hash string) (response string, err error) {
-	return n.showNoteImplementation(notesRef, hash)
+var dummyStubArgsNone = func() (string, error) { return "", nil }
+var dummyStubArgsString = func(string) (string, error) { return "", nil }
+var dummyStubArgsStringString = func(string, string) (string, error) { return "", nil }
+
+var responseStubArgsNone = func(expectedResponse string) func() (string, error) {
+	return func() (string, error) {
+		return expectedResponse, nil
+	}
 }
 
-var dummyStubInputsNone = func() (string, error) { return "", nil }
-var dummyStubInputsString = func(string) (string, error) { return "", nil }
-var dummyStubInputsStringString = func(string, string) (string, error) { return "", nil }
+var responseStubArgsString = func(expectedResponse string) func(string) (string, error) {
+	return func(string) (string, error) {
+		return expectedResponse, nil
+	}
+}
 
-var spyInputsString = func(isCalled *bool) func(string) (string, error) {
+var responseStubArgsStringString = func(expectedResponse string) func(string, string) (string, error) {
+	return func(string, string) (string, error) {
+		return expectedResponse, nil
+	}
+}
+
+var spyArgsString = func(isCalled *bool) func(string) (string, error) {
 	*isCalled = false
 	return func(string) (string, error) {
 		*isCalled = true
 		return "", nil
-	}
-}
-
-var showStubReturnResponseAtDepth = func(expectedResponse string, depth int) func(string, string) (response string, err error) {
-	return func(string, string) (response string, err error) {
-		switch {
-		case depth < 0:
-			err = errors.New("search continued too deep")
-		case depth == 0:
-			response = expectedResponse // Note found
-		default:
-			// No note at this level; mimic expected error and response
-			err = errors.New("exit status 1")
-			response = "error: no note found for object 0123456789abcdef.\n"
-		}
-
-		depth--
-
-		return response, err
 	}
 }
 
@@ -264,9 +285,9 @@ func TestFetchFlag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var fetchCalled bool
 			gitWrapper := &notesStub{
-				fetchNotesImplementation: spyInputsString(&fetchCalled),
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   dummyStubInputsStringString,
+				fetchNotesImplementation: spyArgsString(&fetchCalled),
+				pushNotesImplementation:  dummyStubArgsString,
+				notesShowImplementation:  dummyStubArgsStringString,
 			}
 			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
@@ -300,11 +321,13 @@ func TestPushFlag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var pushCalled bool
 			gitWrapper := &notesStub{
-				addNoteImplementation:      dummyStubInputsStringString,
-				fetchNotesImplementation:   dummyStubInputsString,
-				pushNotesImplementation:    spyInputsString(&pushCalled),
-				revParseHeadImplementation: dummyStubInputsNone,
-				showNoteImplementation:     dummyStubInputsStringString,
+				pushNotesImplementation:    spyArgsString(&pushCalled),
+				fetchNotesImplementation:   dummyStubArgsString,
+				revParseHeadImplementation: dummyStubArgsNone,
+				logCommitsImplementation:   dummyStubArgsNone,
+				notesAddImplementation:     dummyStubArgsStringString,
+				notesListImplementation:    dummyStubArgsString,
+				notesShowImplementation:    dummyStubArgsStringString,
 			}
 			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
@@ -330,8 +353,10 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 		root := NewRootCommand()
 		gitWrapper := &notesStub{
 			fetchNotesImplementation: fetchStubNoUpstreamRef,
-			pushNotesImplementation:  dummyStubInputsString,
-			showNoteImplementation:   dummyStubInputsStringString,
+			pushNotesImplementation:  dummyStubArgsString,
+			logCommitsImplementation: dummyStubArgsNone,
+			notesListImplementation:  dummyStubArgsString,
+			notesShowImplementation:  dummyStubArgsStringString,
 		}
 		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
@@ -341,4 +366,82 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, testDataEmpty.outputPlain, gotOutput)
 	})
+}
+
+func TestGetCommitHashes(t *testing.T) {
+	testCases := []struct {
+		name                string
+		gitLogCommitsOutput string
+		wantedGitCommits    []string
+	}{
+		{
+			name:                "Get commit hashes - no history",
+			gitLogCommitsOutput: "",
+			wantedGitCommits:    []string{},
+		},
+		{
+			name:                "Get commit hashes - 1 commit history",
+			gitLogCommitsOutput: "COMMIT_HASH\n",
+			wantedGitCommits:    []string{"COMMIT_HASH"},
+		},
+		{
+			name:                "Get commit hashes - 2 commit history",
+			gitLogCommitsOutput: "1234567\n890abcd\n",
+			wantedGitCommits:    []string{"1234567", "890abcd"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gitWrapper := &notesStub{
+				logCommitsImplementation: func() (response string, err error) {
+					return tc.gitLogCommitsOutput, nil
+				},
+			}
+
+			hashes, err := getCommitHashes(gitWrapper, 10000)
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, tc.wantedGitCommits, hashes)
+		})
+	}
+}
+
+func TestGetNotesHashes(t *testing.T) {
+	testCases := []struct {
+		name               string
+		gitNotesListOutput string
+		wantedNotesCommits []string
+	}{
+		{
+			name:               "Get notes hashes - no notes",
+			gitNotesListOutput: "",
+			wantedNotesCommits: []string{},
+		},
+		{
+			name:               "Get notes hashes - 1 note",
+			gitNotesListOutput: "NOTE_OBJECT_HASH ANNOTATED_OBJECT_HASH\n",
+			wantedNotesCommits: []string{"ANNOTATED_OBJECT_HASH"},
+		},
+		{
+			name:               "Get notes hashes - 1 note",
+			gitNotesListOutput: "NOTE_OBJECT_HASH ANNOTATED_OBJECT_HASH\n01234567 890abcd\n",
+			wantedNotesCommits: []string{"ANNOTATED_OBJECT_HASH", "890abcd"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			gitWrapper := &notesStub{
+				notesListImplementation: func(string) (response string, err error) {
+					return tc.gitNotesListOutput, nil
+				},
+			}
+
+			hashes, err := getNotesHashes(gitWrapper, "DUMMY_NOTES_REF")
+
+			assert.NoError(t, err)
+			assert.EqualValues(t, tc.wantedNotesCommits, hashes)
+		})
+	}
 }

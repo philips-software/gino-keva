@@ -3,13 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/philips-software/gino-keva/internal/git"
-	"github.com/spf13/cobra"
-
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 // InvalidOutputFormat error indicates the specified output format is invalid
@@ -47,13 +44,7 @@ func addListCommandTo(root *cobra.Command) {
 	root.AddCommand(listCommand)
 }
 
-type findTextOptions struct {
-	AttemptsLeft int
-	CommitRef    string
-	NotesRef     string
-}
-
-func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth int, outputFormat string) (out string, err error) {
+func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth uint, outputFormat string) (out string, err error) {
 	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return "", err
@@ -62,13 +53,8 @@ func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth int, output
 	return convertValuesToOutput(values, outputFormat)
 }
 
-func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth int) (values *Values, err error) {
-	noteText, err := findNoteText(gitWrapper, &findTextOptions{
-		AttemptsLeft: maxDepth,
-		CommitRef:    "HEAD",
-		NotesRef:     notesRef,
-	})
-
+func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (values *Values, err error) {
+	noteText, err := findNoteText(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return nil, err
 	}
@@ -81,41 +67,59 @@ func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth int) (value
 	return values, err
 }
 
-func findNoteText(gitWrapper git.Wrapper, options *findTextOptions) (string, error) {
-	log.WithField("hash", options.CommitRef).Debug("Looking for git notes...")
-
-	out, err := gitWrapper.ShowNote(options.NotesRef, options.CommitRef)
-	if err == nil {
-		log.WithField("note", out).Debug("Found note")
-		return out, nil
-	}
-
-	if strings.HasPrefix(out, "fatal: failed to resolve '") {
-		log.WithField("ref", options.NotesRef).Warning("Reached root commit. No prior notes found")
-		return "", nil
-	}
-
-	r, _ := regexp.Compile("error: no note found for object ([a-f0-9]+).\n")
-	matches := r.FindStringSubmatch(out)
-
-	if len(matches) == 0 {
-		log.Error(out)
+func findNoteText(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (noteText string, err error) {
+	notes, err := getNotesHashes(gitWrapper, notesRef)
+	if err != nil {
 		return "", err
 	}
+	log.WithFields(log.Fields{
+		"first 10 notes":   limitStringSlice(notes, 10),
+		"Total # of notes": len(notes),
+	}).Debug()
 
-	options.CommitRef = matches[1]
-	log.WithField("resolvedRef", options.CommitRef).Debug("No notes here.")
+	// Count is 1 higher than depth, since depth of 0 refers would still include current HEAD commit
+	maxCount := maxDepth + 1
 
-	if options.AttemptsLeft == 0 {
-		log.WithField("ref", options.NotesRef).Warning("No prior notes found within maximum depth!")
+	// Try to get one more commit so we can detect if commits were exhausted in case no note was found
+	commits, err := getCommitHashes(gitWrapper, maxCount+1)
+	if err != nil {
+		return "", err
+	}
+	log.WithFields(log.Fields{
+		"first 10 commits":   limitStringSlice(commits, 10),
+		"Total # of commits": len(commits),
+	}).Debug()
 
-		return "", nil
+	// Get all notes for commits up to maxDepth
+	notesIntersect := getNotesIntersect(notes, limitStringSlice(commits, maxCount))
+	log.WithFields(log.Fields{
+		"first 10 notesIntersect":   limitStringSlice(notesIntersect, 10),
+		"Total # of notesIntersect": len(notesIntersect),
+	}).Debug()
+
+	if len(notesIntersect) == 0 {
+		if len(commits) == int(maxCount+1) {
+			log.WithField("ref", notesRef).Warning("No prior notes found within maximum depth!")
+		} else {
+			log.WithField("ref", notesRef).Warning("Reached root commit. No prior notes found")
+		}
+		noteText = ""
+	} else {
+		noteText, err = gitWrapper.NotesShow(notesRef, notesIntersect[0])
+		if err != nil {
+			return "", err
+		}
 	}
 
-	options.CommitRef = fmt.Sprintf("%v^", options.CommitRef)
-	options.AttemptsLeft--
+	return noteText, nil
+}
 
-	return findNoteText(gitWrapper, options)
+func limitStringSlice(slice []string, limit uint) []string {
+	if len(slice) <= int(limit) {
+		return slice
+	} else {
+		return slice[:limit]
+	}
 }
 
 func convertValuesToOutput(values *Values, outputFlag string) (out string, err error) {

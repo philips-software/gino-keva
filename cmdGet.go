@@ -30,7 +30,7 @@ func addGetCommandTo(root *cobra.Command) {
 	root.AddCommand(getCommand)
 }
 
-func getValue(gitWrapper git.Wrapper, notesRef string, key string, maxDepth int) (string, error) {
+func getValue(gitWrapper git.Wrapper, notesRef string, key string, maxDepth uint) (string, error) {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {

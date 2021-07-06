@@ -18,7 +18,7 @@ const (
 )
 
 var globalFlags = struct {
-	MaxDepth   int
+	MaxDepth   uint
 	NotesRef   string
 	VerboseLog bool
 
@@ -139,6 +139,59 @@ func convertGitOutputToError(out string, errorCode error) (err error) {
 	return err
 }
 
+func getCommitHashes(gitWrapper git.Wrapper, maxCount uint) (hashList []string, err error) {
+	output, err := gitWrapper.LogCommits(maxCount)
+	if err != nil {
+		return nil, err
+	}
+
+	if output == "" {
+		hashList = []string{}
+	} else {
+		output := strings.TrimSuffix(output, "\n")
+		hashList = strings.Split(output, "\n")
+	}
+
+	return hashList, nil
+}
+
+func getNotesHashes(gitWrapper git.Wrapper, notesRef string) (hashList []string, err error) {
+	output, err := gitWrapper.NotesList(notesRef)
+	if err != nil {
+		return nil, err
+	}
+
+	if output == "" {
+		hashList = []string{}
+	} else {
+		output := strings.TrimSuffix(output, "\n")
+		lines := strings.Split(output, "\n")
+		for _, line := range lines {
+			hashes := strings.Split(line, " ")
+			hashList = append(hashList, hashes[1])
+		}
+	}
+	return hashList, nil
+}
+
+func getNotesIntersect(notes, commits []string) (notesIntersect []string) {
+	for i := 0; i < len(notes); i++ {
+		if contains(commits, notes[i]) {
+			notesIntersect = append(notesIntersect, notes[i])
+		}
+	}
+	return notesIntersect
+}
+
+func contains(slice []string, s string) bool {
+	for _, a := range slice {
+		if a == s {
+			return true
+		}
+	}
+	return false
+}
+
 func initializeConfig(cmd *cobra.Command) {
 	v := viper.New()
 
@@ -175,7 +228,7 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 }
 
 func addRootFlagsTo(cmd *cobra.Command) {
-	cmd.PersistentFlags().IntVar(&globalFlags.MaxDepth, "max-depth", 50, "Set maximum search depth for a note")
+	cmd.PersistentFlags().UintVar(&globalFlags.MaxDepth, "max-depth", 500, "Set maximum search depth for a note")
 	cmd.PersistentFlags().StringVar(&globalFlags.NotesRef, "ref", "gino_keva", "Name of notes reference")
 	cmd.PersistentFlags().BoolVarP(&globalFlags.VerboseLog, "verbose", "v", false, "Turn on verbose logging")
 

@@ -11,24 +11,22 @@ import (
 	"github.com/ldez/go-git-cmd-wrapper/v2/notes"
 	"github.com/ldez/go-git-cmd-wrapper/v2/push"
 	"github.com/ldez/go-git-cmd-wrapper/v2/revparse"
+	"github.com/ldez/go-git-cmd-wrapper/v2/types"
 )
 
 // Wrapper interface
 type Wrapper interface {
-	AddNote(notesRef, msg string) (string, error)
 	FetchNotes(notesRef string, force bool) (string, error)
+	LogCommits(maxCount uint) (string, error)
+	NotesAdd(notesRef, msg string) (string, error)
+	NotesList(notesRef string) (string, error)
+	NotesShow(notesRef, hash string) (string, error)
 	PushNotes(notesRef string) (string, error)
 	RevParseHead() (string, error)
-	ShowNote(notesRef, hash string) (string, error)
 }
 
 // GoGitCmdWrapper implements the Wrapper interface using go-git-cmd-wrapper
 type GoGitCmdWrapper struct {
-}
-
-// AddNote sets/overwrites a note
-func (GoGitCmdWrapper) AddNote(notesRef, msg string) (string, error) {
-	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Add("", notes.Message(msg), notes.Force))
 }
 
 // FetchNotes notes
@@ -41,6 +39,29 @@ func (GoGitCmdWrapper) FetchNotes(notesRef string, force bool) (string, error) {
 	return gitCmdWrapper.Fetch(fetch.NoTags, fetch.Remote("origin"), fetch.RefSpec(refSpec))
 }
 
+// LogCommits returns log output with commit hashes
+func (GoGitCmdWrapper) LogCommits(maxCount uint) (string, error) {
+	return gitCmdWrapper.Raw("log", func(g *types.Cmd) {
+		g.AddOptions(fmt.Sprintf("--max-count=%d", maxCount))
+		g.AddOptions("--pretty=format:%H")
+	})
+}
+
+// NotesAdd sets/overwrites a note
+func (GoGitCmdWrapper) NotesAdd(notesRef, msg string) (string, error) {
+	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Add("", notes.Message(msg), notes.Force))
+}
+
+// NotesList returns all the notes
+func (GoGitCmdWrapper) NotesList(notesRef string) (string, error) {
+	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.List(""))
+}
+
+// NotesShow returns the note for provided hash, or error if there is none
+func (GoGitCmdWrapper) NotesShow(notesRef, hash string) (string, error) {
+	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Show(hash))
+}
+
 // PushNotes notes
 func (GoGitCmdWrapper) PushNotes(notesRef string) (string, error) {
 	refSpec := fmt.Sprintf("refs/notes/%v:refs/notes/%v", notesRef, notesRef)
@@ -50,11 +71,6 @@ func (GoGitCmdWrapper) PushNotes(notesRef string) (string, error) {
 // RevParseHead returns the HEAD commit hash
 func (g GoGitCmdWrapper) RevParseHead() (string, error) {
 	return gitCmdWrapper.RevParse(revparse.Args("HEAD"))
-}
-
-// ShowNote returns the note for provided hash, or error if there is none
-func (GoGitCmdWrapper) ShowNote(notesRef, hash string) (string, error) {
-	return gitCmdWrapper.Notes(notes.Ref(notesRef), notes.Show(hash))
 }
 
 type contextKey string

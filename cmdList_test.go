@@ -40,9 +40,11 @@ func TestListCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
 			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
-				fetchNotesImplementation: dummyStubInputsString,
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   showStubReturnResponseAtDepth(input, 0),
+				fetchNotesImplementation: dummyStubArgsString,
+				pushNotesImplementation:  dummyStubArgsString,
+				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
+				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
+				notesShowImplementation:  responseStubArgsStringString(input),
 			})
 			gotOutput, err := executeCommandContext(ctx, root, tc.args...)
 			assert.NoError(t, err)
@@ -80,9 +82,11 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gitWrapper := notesStub{
-				fetchNotesImplementation: dummyStubInputsString,
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   showStubReturnResponseAtDepth(input, 0),
+				fetchNotesImplementation: dummyStubArgsString,
+				pushNotesImplementation:  dummyStubArgsString,
+				logCommitsImplementation: dummyStubArgsNone,
+				notesListImplementation:  dummyStubArgsString,
+				notesShowImplementation:  responseStubArgsStringString(input),
 			}
 			gotOutput, err := getListOutput(&gitWrapper, "dummyRef", 0, tc.outputFormat)
 
@@ -104,9 +108,11 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 	t.Run("Small repository without prior notes doesn't result in error", func(t *testing.T) {
 		root := NewRootCommand()
 		gitWrapper := &notesStub{
-			fetchNotesImplementation: dummyStubInputsString,
-			pushNotesImplementation:  dummyStubInputsString,
-			showNoteImplementation:   showStubExhaustedRepo,
+			fetchNotesImplementation: dummyStubArgsString,
+			pushNotesImplementation:  dummyStubArgsString,
+			logCommitsImplementation: dummyStubArgsNone,
+			notesListImplementation:  dummyStubArgsString,
+			notesShowImplementation:  showStubExhaustedRepo,
 		}
 		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
@@ -121,7 +127,9 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 func TestInvalidOutputFormat(t *testing.T) {
 	t.Run("InvalidOutputFormat error raised when specifying invalid output format", func(t *testing.T) {
 		gitWrapper := notesStub{
-			showNoteImplementation: dummyStubInputsStringString,
+			logCommitsImplementation: dummyStubArgsNone,
+			notesListImplementation:  dummyStubArgsString,
+			notesShowImplementation:  dummyStubArgsStringString,
 		}
 
 		_, err := getListOutput(&gitWrapper, "dummyRef", 0, "invalid format")
@@ -129,51 +137,4 @@ func TestInvalidOutputFormat(t *testing.T) {
 			assert.IsType(t, &InvalidOutputFormat{}, err)
 		}
 	})
-}
-
-func TestGetListOutputTestDataKeyValue(t *testing.T) {
-	td := testDataKeyValue
-	input := td.input
-	maxDepth := 5
-
-	testCases := []struct {
-		name     string
-		depth    int
-		wantText string
-	}{
-		{
-			name:     "Note on current commit",
-			depth:    0,
-			wantText: td.outputPlain,
-		},
-		{
-			name:     "Note on parent commit",
-			depth:    1,
-			wantText: td.outputPlain,
-		},
-		{
-			name:     "Note at max search depth",
-			depth:    5,
-			wantText: td.outputPlain,
-		},
-		{
-			name:     "Note beyond max search depth",
-			depth:    6,
-			wantText: testDataEmpty.outputPlain,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gitWrapper := notesStub{
-				fetchNotesImplementation: dummyStubInputsString,
-				pushNotesImplementation:  dummyStubInputsString,
-				showNoteImplementation:   showStubReturnResponseAtDepth(input, tc.depth),
-			}
-			gotOutput, err := getListOutput(&gitWrapper, "dummyRef", maxDepth, "plain")
-
-			assert.NoError(t, err)
-			assert.Equal(t, tc.wantText, gotOutput)
-		})
-	}
 }

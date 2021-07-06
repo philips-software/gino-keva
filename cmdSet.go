@@ -52,7 +52,7 @@ func addSetCommandTo(root *cobra.Command) {
 	root.AddCommand(setCommand)
 }
 
-func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxDepth int) (err error) {
+func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxDepth uint) (err error) {
 	key = sanitizeKey(key)
 	err = validateKey(key)
 	if err != nil {
@@ -84,7 +84,7 @@ func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxD
 	}
 
 	{
-		out, err := gitWrapper.AddNote(notesRef, noteText)
+		out, err := gitWrapper.NotesAdd(notesRef, noteText)
 		if err != nil {
 			log.Fatal(out)
 		}

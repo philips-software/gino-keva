@@ -90,9 +90,11 @@ func TestKeyValidation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gitWrapper := &notesStub{
-				addNoteImplementation:      dummyStubInputsStringString,
-				revParseHeadImplementation: dummyStubInputsNone,
-				showNoteImplementation:     dummyStubInputsStringString,
+				notesAddImplementation:     dummyStubArgsStringString,
+				revParseHeadImplementation: dummyStubArgsNone,
+				logCommitsImplementation:   dummyStubArgsNone,
+				notesListImplementation:    dummyStubArgsString,
+				notesShowImplementation:    dummyStubArgsStringString,
 			}
 
 			err := set(gitWrapper, "dummyRef", tc.key, "dummyValue", 0)
