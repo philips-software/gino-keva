@@ -64,11 +64,11 @@ repository`,
 			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
-				err = fetchNotes(gitWrapper, globalFlags.NotesRef)
+				err = fetchNotes(gitWrapper, globalFlags.NotesRef, false)
 
 				if _, ok := err.(*UpstreamChanged); ok {
 					log.Warning("Unpushed local changes are now discarded")
-					err = fetchNotesWithForce(gitWrapper, globalFlags.NotesRef)
+					err = fetchNotes(gitWrapper, globalFlags.NotesRef, true)
 				}
 
 				if _, ok := err.(*NoRemoteRef); ok {
@@ -96,19 +96,11 @@ repository`,
 	return rootCommand
 }
 
-func fetchNotes(gitWrapper git.Wrapper, notesRef string) error {
-	log.Debug("Fetching notes...")
+func fetchNotes(gitWrapper git.Wrapper, notesRef string, force bool) error {
+	log.WithField("force", force).Debug("Fetching notes...")
 	defer log.Debug("Done.")
 
-	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, false)
-	return convertGitOutputToError(out, errorCode)
-}
-
-func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string) error {
-	log.Debug("Fetching notes with force...")
-	defer log.Debug("Done.")
-
-	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, true)
+	out, errorCode := gitWrapper.FetchNotes(globalFlags.NotesRef, force)
 	return convertGitOutputToError(out, errorCode)
 }
 
