@@ -17,34 +17,39 @@ func TestSetCommand(t *testing.T) {
 		wanted string
 	}{
 		{
-			name:   "Start empty, set key=value (default ref)",
+			name:   "Start empty, set MY_KEY=value (default ref)",
 			start:  testDataEmpty.input,
-			args:   []string{"set", "MY_key", "value"},
+			args:   []string{"set", "my_key", "value"},
 			source: "01234567",
 			wanted: testDataKeyValue.outputRaw,
 		},
 		{
-			name:   "Start empty, set key=value (non-default ref)",
-			start:  testDataEmpty.input,
-			args:   []string{"set", "MY_KEY", "value", "--ref", "non_default"},
-			source: "01234567",
-			wanted: testDataKeyValue.outputRaw,
+			name:   "Start MY_KEY=value, set foo=bar (non-default ref)",
+			start:  testDataKeyValue.input,
+			args:   []string{"set", "foo", "bar", "--ref", "non_default"},
+			source: "abcd1234",
+			wanted: testDataKeyValueFooBar.outputRaw,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			gitWrapper := &notesAddSpy{
-				revParseHeadResponse: tc.source,
-				showResponse:         tc.start,
+			var addResult string
+			gitWrapper := &notesStub{
+				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
+				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
+				notesAddImplementation:     spyArgsStringString(nil, nil, &addResult),
+				notesShowImplementation:    responseStubArgsStringString(tc.start),
+				revParseHeadImplementation: responseStubArgsNone(tc.source),
 			}
 			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
-			_, err := executeCommandContext(ctx, root, tc.args...)
+			args := disableFetch(tc.args)
+			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, gitWrapper.AddResult)
+			assert.Equal(t, tc.wanted, addResult)
 		})
 	}
 }
@@ -142,14 +147,18 @@ func TestSet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			gitWrapper := &notesAddSpy{
-				revParseHeadResponse: tc.value.Source,
-				showResponse:         tc.start,
+			var addResult string
+			gitWrapper := &notesStub{
+				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
+				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
+				notesAddImplementation:     spyArgsStringString(nil, nil, &addResult),
+				notesShowImplementation:    responseStubArgsStringString(tc.start),
+				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
 			}
 
 			err := set(gitWrapper, "dummyRef", tc.key, tc.value.Data, 0)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, gitWrapper.AddResult)
+			assert.Equal(t, tc.wanted, addResult)
 		})
 	}
 }

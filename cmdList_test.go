@@ -40,13 +40,14 @@ func TestListCommand(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
 			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
-				fetchNotesImplementation: dummyStubArgsString,
-				pushNotesImplementation:  dummyStubArgsString,
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
 				notesShowImplementation:  responseStubArgsStringString(input),
 			})
-			gotOutput, err := executeCommandContext(ctx, root, tc.args...)
+
+			args := disableFetch(tc.args)
+			gotOutput, err := executeCommandContext(ctx, root, args...)
+
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantOutput, gotOutput)
 		})
@@ -82,8 +83,6 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			gitWrapper := notesStub{
-				fetchNotesImplementation: dummyStubArgsString,
-				pushNotesImplementation:  dummyStubArgsString,
 				logCommitsImplementation: dummyStubArgsNone,
 				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  responseStubArgsStringString(input),
@@ -108,15 +107,13 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 	t.Run("Small repository without prior notes doesn't result in error", func(t *testing.T) {
 		root := NewRootCommand()
 		gitWrapper := &notesStub{
-			fetchNotesImplementation: dummyStubArgsString,
-			pushNotesImplementation:  dummyStubArgsString,
 			logCommitsImplementation: dummyStubArgsNone,
 			notesListImplementation:  dummyStubArgsString,
 			notesShowImplementation:  showStubExhaustedRepo,
 		}
 		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
-		args := []string{"list"}
+		args := disableFetch([]string{"list"})
 		gotOutput, err := executeCommandContext(ctx, root, args...)
 
 		assert.NoError(t, err)

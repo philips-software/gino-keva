@@ -12,96 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type notesDummy struct {
-}
-
-// FetchNotes test-double
-func (n notesDummy) FetchNotes(string, bool) (string, error) {
-	return "", nil
-}
-
-// LogCommits test-double
-func (notesDummy) LogCommits(uint) (string, error) {
-	return "", nil
-}
-
-// NotesAdd test-double
-func (notesDummy) NotesAdd(string, string) (string, error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
-//NotesList test-double
-func (notesDummy) NotesList(string) (response string, err error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
-// NotesPrune dummy
-func (notesDummy) NotesPrune(string) (string, error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
-//NotesShow test-double
-func (notesDummy) NotesShow(string, string) (response string, err error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
-// PushNotes test-double
-func (notesDummy) PushNotes(string) (string, error) {
-	return "", nil
-}
-
-// RevParseHead test-double
-func (notesDummy) RevParseHead() (string, error) {
-	panic(errors.New("unexpected call to dummy method"))
-}
-
-type notesAddSpy struct {
-	AddResult            string
-	revParseHeadResponse string
-	showResponse         string
-}
-
-// FetchNotes test-double
-func (n notesAddSpy) FetchNotes(string, bool) (string, error) {
-	return "", nil
-}
-
-// NotesAdd test-double
-func (n *notesAddSpy) NotesAdd(_ string, msg string) (string, error) {
-	n.AddResult = msg // Store input to Add function for test inspection
-	return "", nil
-}
-
-// NotesList test-double
-func (notesAddSpy) NotesList(string) (string, error) {
-	return simpleNotesListResponse, nil
-}
-
-// NotesPrune dummy
-func (notesAddSpy) NotesPrune(string) (string, error) {
-	return "", nil
-}
-
-//NotesShow test-double
-func (n *notesAddSpy) NotesShow(string, string) (string, error) {
-	return n.showResponse, nil
-}
-
-// LogCommits test-double
-func (notesAddSpy) LogCommits(uint) (string, error) {
-	return simpleLogCommitsResponse, nil
-}
-
-// PushNotes test-double
-func (notesAddSpy) PushNotes(string) (string, error) {
-	return "", nil
-}
-
-// RevParse test-double
-func (n notesAddSpy) RevParseHead() (string, error) {
-	return n.revParseHeadResponse, nil
-}
-
 type notesStub struct {
 	fetchNotesImplementation   func(string) (string, error)
 	logCommitsImplementation   func() (string, error)
@@ -180,10 +90,29 @@ var responseStubArgsStringString = func(expectedResponse string) func(string, st
 	}
 }
 
-var spyArgsString = func(isCalled *bool) func(string) (string, error) {
-	*isCalled = false
-	return func(string) (string, error) {
-		*isCalled = true
+var spyArgsString = func(isCalled *bool, arg1 *string) func(string) (string, error) {
+	return func(a1 string) (string, error) {
+		if isCalled != nil {
+			*isCalled = true
+		}
+		if arg1 != nil {
+			*arg1 = a1
+		}
+		return "", nil
+	}
+}
+
+var spyArgsStringString = func(isCalled *bool, arg1, arg2 *string) func(string, string) (string, error) {
+	return func(a1, a2 string) (string, error) {
+		if isCalled != nil {
+			*isCalled = true
+		}
+		if arg1 != nil {
+			*arg1 = a1
+		}
+		if arg2 != nil {
+			*arg2 = a2
+		}
 		return "", nil
 	}
 }
@@ -225,6 +154,14 @@ func executeCommandContext(ctx context.Context, root *cobra.Command, args ...str
 
 	err = root.ExecuteContext(ctx)
 	return buf.String(), err
+}
+
+func disableFetch(args []string) []string {
+	return append(args, "--fetch=false")
+}
+
+func enablePush(args []string) []string {
+	return append(args, "--push")
 }
 
 func TestFlagResolution(t *testing.T) {
@@ -270,7 +207,7 @@ func TestFlagResolution(t *testing.T) {
 			listFlagArgs := []string{"show-flag", "ref"}
 			args := append(listFlagArgs, tc.flagArgs...)
 
-			ctx := git.ContextWithGitWrapper(context.Background(), &notesDummy{})
+			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{})
 			gotOutput, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
@@ -292,7 +229,7 @@ func TestFetchFlag(t *testing.T) {
 		},
 		{
 			name:            "Fetch is NOT called if set to false",
-			args:            []string{"list", "--fetch=false"},
+			args:            disableFetch([]string{"list"}),
 			wantFetchCalled: false,
 		}}
 
@@ -300,8 +237,7 @@ func TestFetchFlag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var fetchCalled bool
 			gitWrapper := &notesStub{
-				fetchNotesImplementation: spyArgsString(&fetchCalled),
-				pushNotesImplementation:  dummyStubArgsString,
+				fetchNotesImplementation: spyArgsString(&fetchCalled, nil),
 				logCommitsImplementation: dummyStubArgsNone,
 				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  dummyStubArgsStringString,
@@ -330,7 +266,7 @@ func TestPushFlag(t *testing.T) {
 		},
 		{
 			name:           "Push is called when flag is set",
-			args:           []string{"set", "foo", "bar", "--push"},
+			args:           enablePush([]string{"set", "foo", "bar"}),
 			wantPushCalled: true,
 		}}
 
@@ -338,8 +274,7 @@ func TestPushFlag(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var pushCalled bool
 			gitWrapper := &notesStub{
-				pushNotesImplementation:    spyArgsString(&pushCalled),
-				fetchNotesImplementation:   dummyStubArgsString,
+				pushNotesImplementation:    spyArgsString(&pushCalled, nil),
 				revParseHeadImplementation: dummyStubArgsNone,
 				logCommitsImplementation:   dummyStubArgsNone,
 				notesAddImplementation:     dummyStubArgsStringString,
@@ -349,7 +284,9 @@ func TestPushFlag(t *testing.T) {
 			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			root := NewRootCommand()
-			_, err := executeCommandContext(ctx, root, tc.args...)
+
+			args := disableFetch(tc.args)
+			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantPushCalled, pushCalled)
@@ -370,7 +307,6 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 		root := NewRootCommand()
 		gitWrapper := &notesStub{
 			fetchNotesImplementation: fetchStubNoUpstreamRef,
-			pushNotesImplementation:  dummyStubArgsString,
 			logCommitsImplementation: dummyStubArgsNone,
 			notesListImplementation:  dummyStubArgsString,
 			notesShowImplementation:  dummyStubArgsStringString,
