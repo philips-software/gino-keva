@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var dummyVersionInfo = `version.Info{Version: "<Version not set>", BuildDate: "<BuildDate not set>", GitCommit: "<GitCommit not set>", GitState: "<GitState not set>"}`
+var dummyVersionInfo = "version.Info{Version: \"<Version not set>\", BuildDate: \"<BuildDate not set>\", GitCommit: \"<GitCommit not set>\", GitState: \"<GitState not set>\"}\n"
 
 func TestVersion(t *testing.T) {
 	t.Run("Version command returns an empty version string", func(t *testing.T) {

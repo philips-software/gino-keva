@@ -13,7 +13,7 @@ func addVersionCommandTo(root *cobra.Command) {
 		Short: "Show version info",
 		Long:  `Show version info`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Fprint(cmd.OutOrStdout(), versioninfo.Get())
+			fmt.Fprintln(cmd.OutOrStdout(), versioninfo.Get())
 			return nil
 		},
 		Args: cobra.NoArgs,
