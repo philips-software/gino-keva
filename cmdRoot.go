@@ -60,27 +60,6 @@ in git notes. You can store any sort of data you want against each commit in you
 repository`,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
 			initializeConfig(cmd)
-
-			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
-
-			if globalFlags.Fetch {
-				err = fetchNotes(gitWrapper, globalFlags.NotesRef, false)
-
-				if _, ok := err.(*UpstreamChanged); ok {
-					log.Warning("Unpushed local changes are now discarded")
-					err = fetchNotes(gitWrapper, globalFlags.NotesRef, true)
-				}
-
-				if _, ok := err.(*NoRemoteRef); ok {
-					log.WithField("notesRef", globalFlags.NotesRef).Debug("Couldn't find remote ref. Nothing fetched")
-					err = nil
-				}
-
-				if err != nil {
-					log.Error(err.Error())
-				}
-			}
-
 			return err
 		},
 	}
@@ -96,7 +75,27 @@ repository`,
 	return rootCommand
 }
 
-func fetchNotes(gitWrapper git.Wrapper, notesRef string, force bool) error {
+func fetchNotes(gitWrapper git.Wrapper) (err error) {
+	err = fetchNotesWithForce(gitWrapper, globalFlags.NotesRef, false)
+
+	if _, ok := err.(*UpstreamChanged); ok {
+		log.Warning("Unpushed local changes are now discarded")
+		err = fetchNotesWithForce(gitWrapper, globalFlags.NotesRef, true)
+	}
+
+	if _, ok := err.(*NoRemoteRef); ok {
+		log.WithField("notesRef", globalFlags.NotesRef).Debug("Couldn't find remote ref. Nothing fetched")
+		err = nil
+	}
+
+	if err != nil {
+		log.Error(err.Error())
+	}
+
+	return err
+}
+
+func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string, force bool) error {
 	log.WithField("force", force).Debug("Fetching notes...")
 	defer log.Debug("Done.")
 

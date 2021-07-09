@@ -16,11 +16,18 @@ func addUnsetCommandTo(root *cobra.Command) {
 		Use:   "unset [key]",
 		Short: "Unset a key",
 		Long:  `Unset a key`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
 			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
-			err := unset(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			if globalFlags.Fetch {
+				err = fetchNotes(gitWrapper)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = unset(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
 			if err != nil {
 				return err
 			}

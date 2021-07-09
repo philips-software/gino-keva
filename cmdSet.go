@@ -29,12 +29,19 @@ func addSetCommandTo(root *cobra.Command) {
 		Use:   "set [key] [value]",
 		Short: "Set the value of a key",
 		Long:  `Set the value of a key`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
 			value := args[1]
 			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
 
-			err := set(gitWrapper, globalFlags.NotesRef, key, value, globalFlags.MaxDepth)
+			if globalFlags.Fetch {
+				err = fetchNotes(gitWrapper)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = set(gitWrapper, globalFlags.NotesRef, key, value, globalFlags.MaxDepth)
 			if err != nil {
 				return err
 			}

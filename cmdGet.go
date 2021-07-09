@@ -12,10 +12,18 @@ func addGetCommandTo(root *cobra.Command) {
 		Use:   "get [key]",
 		Short: "Get the value of a specific key",
 		Long:  `Get the value of a specific key`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
 
 			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+
+			if globalFlags.Fetch {
+				err = fetchNotes(gitWrapper)
+				if err != nil {
+					return err
+				}
+			}
+
 			out, err := getValue(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
 			if err != nil {
 				return err

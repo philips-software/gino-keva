@@ -286,13 +286,13 @@ func TestFetchFlag(t *testing.T) {
 		wantFetchCalled bool
 	}{
 		{
-			name:            "Fetch is called when flag is set (default)",
-			args:            []string{"show-flag", "ref"},
+			name:            "Fetch is called when calling list (default)",
+			args:            []string{"list"},
 			wantFetchCalled: true,
 		},
 		{
-			name:            "Fetch is NOT called when flag is unset",
-			args:            []string{"show-flag", "ref", "--fetch=false"},
+			name:            "Fetch is NOT called if set to false",
+			args:            []string{"list", "--fetch=false"},
 			wantFetchCalled: false,
 		}}
 
@@ -302,6 +302,8 @@ func TestFetchFlag(t *testing.T) {
 			gitWrapper := &notesStub{
 				fetchNotesImplementation: spyArgsString(&fetchCalled),
 				pushNotesImplementation:  dummyStubArgsString,
+				logCommitsImplementation: dummyStubArgsNone,
+				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  dummyStubArgsStringString,
 			}
 			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)

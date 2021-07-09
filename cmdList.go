@@ -26,8 +26,15 @@ func addListCommandTo(root *cobra.Command) {
 		Use:   "list",
 		Short: "List",
 		Long:  `List all of the keys and values currently stored`,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+
+			if globalFlags.Fetch {
+				err = fetchNotes(gitWrapper)
+				if err != nil {
+					return err
+				}
+			}
 
 			out, err := getListOutput(gitWrapper, globalFlags.NotesRef, globalFlags.MaxDepth, outputFormat)
 			if err != nil {
