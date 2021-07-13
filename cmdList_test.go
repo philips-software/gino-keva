@@ -87,7 +87,7 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  responseStubArgsStringString(input),
 			}
-			gotOutput, err := getListOutput(&gitWrapper, "dummyRef", 0, tc.outputFormat)
+			gotOutput, err := getListOutput(&gitWrapper, dummyRef, 0, tc.outputFormat)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantText, gotOutput)
@@ -129,7 +129,7 @@ func TestInvalidOutputFormat(t *testing.T) {
 			notesShowImplementation:  dummyStubArgsStringString,
 		}
 
-		_, err := getListOutput(&gitWrapper, "dummyRef", 0, "invalid format")
+		_, err := getListOutput(&gitWrapper, dummyRef, 0, "invalid format")
 		if assert.Error(t, err) {
 			assert.IsType(t, &InvalidOutputFormat{}, err)
 		}

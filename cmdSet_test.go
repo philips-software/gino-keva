@@ -102,7 +102,7 @@ func TestKeyValidation(t *testing.T) {
 				notesShowImplementation:    dummyStubArgsStringString,
 			}
 
-			err := set(gitWrapper, "dummyRef", tc.key, "dummyValue", 0)
+			err := set(gitWrapper, dummyRef, tc.key, dummyValue, 0)
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
@@ -156,7 +156,7 @@ func TestSet(t *testing.T) {
 				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
 			}
 
-			err := set(gitWrapper, "dummyRef", tc.key, tc.value.Data, 0)
+			err := set(gitWrapper, dummyRef, tc.key, tc.value.Data, 0)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})

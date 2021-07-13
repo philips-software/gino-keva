@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const (
+	dummyRef   = "DUMMY_REF"
+	dummyValue = "DUMMY_VALUE"
+)
+
 type notesStub struct {
 	fetchNotesImplementation   func(string) (string, error)
 	logCommitsImplementation   func() (string, error)

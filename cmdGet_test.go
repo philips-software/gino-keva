@@ -71,7 +71,7 @@ func TestGetValue(t *testing.T) {
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
 				notesShowImplementation:  responseStubArgsStringString(input),
 			}
-			gotValue, err := getValue(&gitWrapper, "dummyRef", tc.key, maxDepth)
+			gotValue, err := getValue(&gitWrapper, dummyRef, tc.key, maxDepth)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantValue, gotValue)

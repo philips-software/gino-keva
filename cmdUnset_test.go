@@ -81,7 +81,7 @@ func TestUnsetValue(t *testing.T) {
 				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
 			}
 
-			err := unset(gitWrapper, "dummyRef", tc.key, 0)
+			err := unset(gitWrapper, dummyRef, tc.key, 0)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})

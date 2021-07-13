@@ -76,7 +76,7 @@ func TestGetNotesHashes(t *testing.T) {
 				},
 			}
 
-			hashes, err := getNotesHashes(gitWrapper, "DUMMY_NOTES_REF")
+			hashes, err := getNotesHashes(gitWrapper, dummyRef)
 
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.wantedNotesCommits, hashes)
