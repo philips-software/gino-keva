@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ func TestGetCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
+			ctx := ContextWithGitWrapper(context.Background(), &notesStub{
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
 				notesShowImplementation:  responseStubArgsStringString(input),

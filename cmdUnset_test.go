@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +36,7 @@ func TestUnsetCommand(t *testing.T) {
 				revParseHeadImplementation: responseStubArgsNone(tc.source),
 			}
 
-			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			args := disableFetch(tc.args)
 			_, err := executeCommandContext(ctx, root, args...)

@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -53,7 +52,7 @@ func TestFlagResolution(t *testing.T) {
 			listFlagArgs := []string{"show-flag", "ref"}
 			args := append(listFlagArgs, tc.flagArgs...)
 
-			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{})
+			ctx := ContextWithGitWrapper(context.Background(), &notesStub{})
 			gotOutput, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
@@ -88,7 +87,7 @@ func TestFetchFlag(t *testing.T) {
 				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  dummyStubArgsStringString,
 			}
-			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			root := NewRootCommand()
 			_, err := executeCommandContext(ctx, root, tc.args...)
@@ -127,7 +126,7 @@ func TestPushFlag(t *testing.T) {
 				notesListImplementation:    dummyStubArgsString,
 				notesShowImplementation:    dummyStubArgsStringString,
 			}
-			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			root := NewRootCommand()
 
@@ -157,7 +156,7 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 			notesListImplementation:  dummyStubArgsString,
 			notesShowImplementation:  dummyStubArgsStringString,
 		}
-		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+		ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 		args := []string{"list"}
 		gotOutput, err := executeCommandContext(ctx, root, args...)

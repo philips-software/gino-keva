@@ -7,7 +7,6 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +31,7 @@ func addSetCommandTo(root *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
 			value := args[1]
-			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+			gitWrapper := GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
 				err = fetchNotes(gitWrapper)
@@ -64,7 +63,7 @@ func addSetCommandTo(root *cobra.Command) {
 	root.AddCommand(setCommand)
 }
 
-func set(gitWrapper git.Wrapper, notesRef string, key string, value string, maxDepth uint) (err error) {
+func set(gitWrapper GitWrapper, notesRef string, key string, value string, maxDepth uint) (err error) {
 	key = sanitizeKey(key)
 	err = validateKey(key)
 	if err != nil {

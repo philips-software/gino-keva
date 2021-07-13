@@ -77,7 +77,7 @@ func main() {
 		root.SilenceUsage = true
 		root.SilenceErrors = true
 
-		ctx := git.ContextWithGitWrapper(context.Background(), &git.GoGitCmdWrapper{})
+		ctx := ContextWithGitWrapper(context.Background(), &git.GoGitCmdWrapper{})
 
 		err = root.ExecuteContext(ctx)
 		attemptsLeft--

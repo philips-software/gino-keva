@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +17,7 @@ func addUnsetCommandTo(root *cobra.Command) {
 		Long:  `Unset a key`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
-			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+			gitWrapper := GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
 				err = fetchNotes(gitWrapper)
@@ -45,7 +44,7 @@ func addUnsetCommandTo(root *cobra.Command) {
 	root.AddCommand(unsetCommand)
 }
 
-func unset(gitWrapper git.Wrapper, notesRef string, key string, maxDepth uint) error {
+func unset(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) error {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {

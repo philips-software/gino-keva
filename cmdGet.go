@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +14,7 @@ func addGetCommandTo(root *cobra.Command) {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			key := args[0]
 
-			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+			gitWrapper := GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
 				err = fetchNotes(gitWrapper)
@@ -38,7 +37,7 @@ func addGetCommandTo(root *cobra.Command) {
 	root.AddCommand(getCommand)
 }
 
-func getValue(gitWrapper git.Wrapper, notesRef string, key string, maxDepth uint) (string, error) {
+func getValue(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) (string, error) {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,7 +42,7 @@ func TestSetCommand(t *testing.T) {
 				notesShowImplementation:    responseStubArgsStringString(tc.start),
 				revParseHeadImplementation: responseStubArgsNone(tc.source),
 			}
-			ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 			args := disableFetch(tc.args)
 			_, err := executeCommandContext(ctx, root, args...)

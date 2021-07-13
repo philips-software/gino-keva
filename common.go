@@ -1,18 +1,51 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/philips-software/gino-keva/internal/utils"
 )
 
 const (
 	maxRetryAttempts = 3
 )
+
+type contextKey string
+
+var (
+	notesContextKey contextKey = "gitNotesKey"
+)
+
+// GitWrapper interface
+type GitWrapper interface {
+	FetchNotes(notesRef string, force bool) (string, error)
+	LogCommits(maxCount uint) (string, error)
+	NotesAdd(notesRef, msg string) (string, error)
+	NotesList(notesRef string) (string, error)
+	NotesPrune(notesRef string) (string, error)
+	NotesShow(notesRef, hash string) (string, error)
+	PushNotes(notesRef string) (string, error)
+	RevParseHead() (string, error)
+}
+
+// ContextWithGitWrapper returns a new context with the git wrapper object added
+func ContextWithGitWrapper(ctx context.Context, gitWrapper GitWrapper) context.Context {
+	return context.WithValue(ctx, notesContextKey, gitWrapper)
+}
+
+// GetGitWrapperFrom returns the git wrapper object from the provided context
+func GetGitWrapperFrom(ctx context.Context) GitWrapper {
+	v := ctx.Value(notesContextKey)
+	if v == nil {
+		log.Fatal("No Notes interface found in context")
+	}
+
+	return v.(GitWrapper)
+}
 
 var globalFlags = struct {
 	MaxDepth   uint
@@ -22,7 +55,7 @@ var globalFlags = struct {
 	Fetch bool
 }{}
 
-func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (values *Values, err error) {
+func getNoteValues(gitWrapper GitWrapper, notesRef string, maxDepth uint) (values *Values, err error) {
 	noteText, err := findNoteText(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return nil, err
@@ -36,7 +69,7 @@ func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (valu
 	return values, err
 }
 
-func findNoteText(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (noteText string, err error) {
+func findNoteText(gitWrapper GitWrapper, notesRef string, maxDepth uint) (noteText string, err error) {
 	notes, err := getNotesHashes(gitWrapper, notesRef)
 	if err != nil {
 		return "", err
@@ -96,7 +129,7 @@ func unmarshal(rawText string) (*Values, error) {
 	return &Values{values: v}, nil
 }
 
-func fetchNotes(gitWrapper git.Wrapper) (err error) {
+func fetchNotes(gitWrapper GitWrapper) (err error) {
 	err = fetchNotesWithForce(gitWrapper, globalFlags.NotesRef, false)
 
 	if _, ok := err.(*UpstreamChanged); ok {
@@ -116,7 +149,7 @@ func fetchNotes(gitWrapper git.Wrapper) (err error) {
 	return err
 }
 
-func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string, force bool) error {
+func fetchNotesWithForce(gitWrapper GitWrapper, notesRef string, force bool) error {
 	log.WithField("force", force).Debug("Fetching notes...")
 	defer log.Debug("Done.")
 
@@ -124,7 +157,7 @@ func fetchNotesWithForce(gitWrapper git.Wrapper, notesRef string, force bool) er
 	return convertGitOutputToError(out, errorCode)
 }
 
-func pruneNotes(gitWrapper git.Wrapper, notesRef string) error {
+func pruneNotes(gitWrapper GitWrapper, notesRef string) error {
 	log.Debug("Pruning notes...")
 	defer log.Debug("Done.")
 
@@ -132,7 +165,7 @@ func pruneNotes(gitWrapper git.Wrapper, notesRef string) error {
 	return convertGitOutputToError(out, errorCode)
 }
 
-func pushNotes(gitWrapper git.Wrapper, notesRef string) error {
+func pushNotes(gitWrapper GitWrapper, notesRef string) error {
 	log.Debug("Pushing notes...")
 	defer log.Debug("Done.")
 
@@ -150,7 +183,7 @@ func pushNotes(gitWrapper git.Wrapper, notesRef string) error {
 	return err
 }
 
-func getCommitHashes(gitWrapper git.Wrapper, maxCount uint) (hashList []string, err error) {
+var getCommitHashes = func(gitWrapper GitWrapper, maxCount uint) (hashList []string, err error) {
 	output, err := gitWrapper.LogCommits(maxCount)
 	if err != nil {
 		return nil, err
@@ -166,7 +199,7 @@ func getCommitHashes(gitWrapper git.Wrapper, maxCount uint) (hashList []string, 
 	return hashList, nil
 }
 
-func getNotesHashes(gitWrapper git.Wrapper, notesRef string) (hashList []string, err error) {
+var getNotesHashes = func(gitWrapper GitWrapper, notesRef string) (hashList []string, err error) {
 	output, err := gitWrapper.NotesList(notesRef)
 	if err != nil {
 		return nil, err

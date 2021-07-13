@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -39,7 +38,7 @@ func TestListCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{
+			ctx := ContextWithGitWrapper(context.Background(), &notesStub{
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
 				notesShowImplementation:  responseStubArgsStringString(input),
@@ -111,7 +110,7 @@ func TestNoNotesLimitedRepoDepth(t *testing.T) {
 			notesListImplementation:  dummyStubArgsString,
 			notesShowImplementation:  showStubExhaustedRepo,
 		}
-		ctx := git.ContextWithGitWrapper(context.Background(), gitWrapper)
+		ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
 		args := disableFetch([]string{"list"})
 		gotOutput, err := executeCommandContext(ctx, root, args...)

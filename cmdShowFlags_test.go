@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -13,7 +12,7 @@ func TestShowFlags(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"show-flag", "Unknown_Flag"}
 
-		ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{})
+		ctx := ContextWithGitWrapper(context.Background(), &notesStub{})
 
 		_, err := executeCommandContext(ctx, root, args...)
 
@@ -22,7 +21,7 @@ func TestShowFlags(t *testing.T) {
 	t.Run("Able to retrieve integer flags", func(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"show-flag", "max-depth", "--max-depth", "42"}
-		ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{})
+		ctx := ContextWithGitWrapper(context.Background(), &notesStub{})
 
 		output, err := executeCommandContext(ctx, root, args...)
 

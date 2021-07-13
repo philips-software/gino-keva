@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +25,7 @@ func addListCommandTo(root *cobra.Command) {
 		Short: "List",
 		Long:  `List all of the keys and values currently stored`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			gitWrapper := git.GetGitWrapperFrom(cmd.Context())
+			gitWrapper := GetGitWrapperFrom(cmd.Context())
 
 			if globalFlags.Fetch {
 				err = fetchNotes(gitWrapper)
@@ -50,7 +49,7 @@ func addListCommandTo(root *cobra.Command) {
 	root.AddCommand(listCommand)
 }
 
-func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth uint, outputFormat string) (out string, err error) {
+func getListOutput(gitWrapper GitWrapper, notesRef string, maxDepth uint, outputFormat string) (out string, err error) {
 	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return "", err

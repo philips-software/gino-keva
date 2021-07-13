@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/philips-software/gino-keva/internal/git"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +13,7 @@ func TestVersion(t *testing.T) {
 	t.Run("Version command returns an empty version string", func(t *testing.T) {
 		root := NewRootCommand()
 		args := []string{"version"}
-		ctx := git.ContextWithGitWrapper(context.Background(), &notesStub{})
+		ctx := ContextWithGitWrapper(context.Background(), &notesStub{})
 
 		out, err := executeCommandContext(ctx, root, args...)
 
