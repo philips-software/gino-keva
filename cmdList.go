@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/philips-software/gino-keva/internal/git"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -60,75 +59,6 @@ func getListOutput(gitWrapper git.Wrapper, notesRef string, maxDepth uint, outpu
 	return convertValuesToOutput(values, outputFormat)
 }
 
-func getNoteValues(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (values *Values, err error) {
-	noteText, err := findNoteText(gitWrapper, notesRef, maxDepth)
-	if err != nil {
-		return nil, err
-	}
-
-	values, err = unmarshal(noteText)
-	if err != nil {
-		return nil, err
-	}
-
-	return values, err
-}
-
-func findNoteText(gitWrapper git.Wrapper, notesRef string, maxDepth uint) (noteText string, err error) {
-	notes, err := getNotesHashes(gitWrapper, notesRef)
-	if err != nil {
-		return "", err
-	}
-	log.WithFields(log.Fields{
-		"first 10 notes":   limitStringSlice(notes, 10),
-		"Total # of notes": len(notes),
-	}).Debug()
-
-	// Count is 1 higher than depth, since depth of 0 refers would still include current HEAD commit
-	maxCount := maxDepth + 1
-
-	// Try to get one more commit so we can detect if commits were exhausted in case no note was found
-	commits, err := getCommitHashes(gitWrapper, maxCount+1)
-	if err != nil {
-		return "", err
-	}
-	log.WithFields(log.Fields{
-		"first 10 commits":   limitStringSlice(commits, 10),
-		"Total # of commits": len(commits),
-	}).Debug()
-
-	// Get all notes for commits up to maxDepth
-	notesIntersect := getNotesIntersect(notes, limitStringSlice(commits, maxCount))
-	log.WithFields(log.Fields{
-		"first 10 notesIntersect":   limitStringSlice(notesIntersect, 10),
-		"Total # of notesIntersect": len(notesIntersect),
-	}).Debug()
-
-	if len(notesIntersect) == 0 {
-		if len(commits) == int(maxCount+1) {
-			log.WithField("ref", notesRef).Warning("No prior notes found within maximum depth!")
-		} else {
-			log.WithField("ref", notesRef).Warning("Reached root commit. No prior notes found")
-		}
-		noteText = ""
-	} else {
-		noteText, err = gitWrapper.NotesShow(notesRef, notesIntersect[0])
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return noteText, nil
-}
-
-func limitStringSlice(slice []string, limit uint) []string {
-	if len(slice) <= int(limit) {
-		return slice
-	}
-
-	return slice[:limit]
-}
-
 func convertValuesToOutput(values *Values, outputFlag string) (out string, err error) {
 	switch outputFlag {
 
@@ -170,17 +100,4 @@ func marshalRaw(values *Values) (string, error) {
 	}
 
 	return fmt.Sprintf("%s\n", result), nil
-}
-
-func unmarshal(rawText string) (*Values, error) {
-	v := make(map[string]Value)
-
-	if rawText != "" {
-		err := json.Unmarshal([]byte(rawText), &v)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return &Values{values: v}, nil
 }
