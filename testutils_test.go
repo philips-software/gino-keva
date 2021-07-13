@@ -118,31 +118,35 @@ var (
 )
 
 type testData struct {
-	input       string
-	outputRaw   string
+	inputOld    string
+	inputNew    string
 	outputPlain string
 	outputJSON  string
+	outputRaw   string
 }
 
 var testDataEmpty = testData{
-	input:       `{}`,
-	outputRaw:   "{}\n",
+	inputOld:    `{}`,
+	inputNew:    `{"snapshot":{}}`,
 	outputPlain: "",
-	outputJSON:  "{}\n",
+	outputJSON:  "{\n  \"snapshot\": {}\n}\n",
+	outputRaw:   "{\"snapshot\":{}}\n",
 }
 
 var testDataKeyValue = testData{
-	input:       `{"MY_KEY": {"data":"value", "source": "01234567"}}`,
-	outputRaw:   "{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	inputOld:    `{"MY_KEY": {"data":"value", "source": "01234567"}}`,
+	inputNew:    `{"snapshot":{"MY_KEY": {"data":"value", "source": "01234567"}}}`,
 	outputPlain: "MY_KEY=value\n",
-	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
+	outputJSON:  "{\n  \"snapshot\": {\n    \"MY_KEY\": \"value\"\n  }\n}\n",
+	outputRaw:   "{\"snapshot\":{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
 }
 
 var testDataKeyValueFooBar = testData{
-	input:       `{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}`,
-	outputRaw:   "{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}\n",
+	inputOld:    `{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}`,
+	inputNew:    `{"snapshot":{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}}`,
 	outputPlain: "MY_KEY=value\nFOO=bar\n",
-	outputJSON:  "{\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n}\n",
+	outputJSON:  "{\n  \"snapshot\": {\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n  }\n}\n",
+	outputRaw:   "{\"snapshot\":{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
 }
 
 func executeCommandContext(ctx context.Context, root *cobra.Command, args ...string) (output string, err error) {

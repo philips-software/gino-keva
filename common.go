@@ -116,17 +116,40 @@ func findNoteText(gitWrapper GitWrapper, notesRef string, maxDepth uint) (noteTe
 	return noteText, nil
 }
 
-func unmarshal(rawText string) (*Values, error) {
+func unmarshal(rawText string) (values *Values, err error) {
 	v := make(map[string]Value)
 
 	if rawText != "" {
-		err := json.Unmarshal([]byte(rawText), &v)
-		if err != nil {
-			return nil, err
+		if strings.Contains(rawText, "\"snapshot\":{") {
+			err = unmarshalNewFormatInto(rawText, &v)
+		} else {
+			err = unmarshalOldFormatInto(rawText, &v)
 		}
 	}
 
+	if err != nil {
+		return nil, err
+	}
+
 	return &Values{values: v}, nil
+}
+
+func unmarshalOldFormatInto(rawText string, v *map[string]Value) error {
+	log.WithField("rawText", rawText).Debug("Unmarshalling old format...")
+	return json.Unmarshal([]byte(rawText), v)
+}
+
+func unmarshalNewFormatInto(rawText string, v *map[string]Value) error {
+	log.WithField("rawText", rawText).Debug("Unmarshalling new format...")
+
+	newFormat := make(map[string]map[string]Value)
+
+	if err := json.Unmarshal([]byte(rawText), &newFormat); err != nil {
+		return err
+	}
+
+	*v = newFormat["snapshot"]
+	return nil
 }
 
 func fetchNotes(gitWrapper GitWrapper) (err error) {

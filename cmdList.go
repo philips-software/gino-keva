@@ -65,7 +65,7 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 		if values.Count() == 0 {
 			out = ""
 		} else {
-			for k, v := range values.Iterate() {
+			for k, v := range values.IterateSnapshot() {
 				out += fmt.Sprintf("%s=%s\n", k, v)
 			}
 		}

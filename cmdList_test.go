@@ -10,7 +10,7 @@ import (
 
 func TestListCommand(t *testing.T) {
 	td := testDataKeyValue
-	input := td.input
+	input := td.inputOld
 
 	testCases := []struct {
 		name       string
@@ -55,26 +55,47 @@ func TestListCommand(t *testing.T) {
 
 func TestGetListOutputTestDataEmpty(t *testing.T) {
 	td := testDataEmpty
-	input := td.input
 
 	testCases := []struct {
 		name         string
 		outputFormat string
+		input        string
 		wantText     string
 	}{
 		{
+			name:         "Empty note, old format (plain)",
+			outputFormat: "plain",
+			input:        td.inputOld,
+			wantText:     td.outputPlain,
+		},
+		{
+			name:         "Empty note, old format (json)",
+			outputFormat: "json",
+			input:        td.inputOld,
+			wantText:     td.outputJSON,
+		},
+		{
+			name:         "Empty note, old format (raw)",
+			outputFormat: "raw",
+			input:        td.inputOld,
+			wantText:     td.outputRaw,
+		},
+		{
 			name:         "Empty note (plain)",
 			outputFormat: "plain",
+			input:        td.inputNew,
 			wantText:     td.outputPlain,
 		},
 		{
 			name:         "Empty note (json)",
 			outputFormat: "json",
+			input:        td.inputNew,
 			wantText:     td.outputJSON,
 		},
 		{
 			name:         "Empty note (raw)",
 			outputFormat: "raw",
+			input:        td.inputNew,
 			wantText:     td.outputRaw,
 		},
 	}
@@ -84,7 +105,7 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 			gitWrapper := notesStub{
 				logCommitsImplementation: dummyStubArgsNone,
 				notesListImplementation:  dummyStubArgsString,
-				notesShowImplementation:  responseStubArgsStringString(input),
+				notesShowImplementation:  responseStubArgsStringString(tc.input),
 			}
 			gotOutput, err := getListOutput(&gitWrapper, dummyRef, 0, tc.outputFormat)
 
