@@ -35,11 +35,11 @@ func TestSetCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			root := NewRootCommand()
-			var addResult string
+			var notesAddArgMsg string
 			gitWrapper := &notesStub{
 				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
-				notesAddImplementation:     spyArgsStringString(nil, nil, &addResult),
+				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
 				notesShowImplementation:    responseStubArgsStringString(tc.start),
 				revParseHeadImplementation: responseStubArgsNone(tc.source),
 			}
@@ -49,7 +49,7 @@ func TestSetCommand(t *testing.T) {
 			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, addResult)
+			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})
 	}
 }
@@ -147,18 +147,18 @@ func TestSet(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			var addResult string
+			var notesAddArgMsg string
 			gitWrapper := &notesStub{
 				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
-				notesAddImplementation:     spyArgsStringString(nil, nil, &addResult),
+				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
 				notesShowImplementation:    responseStubArgsStringString(tc.start),
 				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
 			}
 
 			err := set(gitWrapper, "dummyRef", tc.key, tc.value.Data, 0)
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, addResult)
+			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})
 	}
 }

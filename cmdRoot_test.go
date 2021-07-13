@@ -24,8 +24,8 @@ type notesStub struct {
 
 // Provide simple implementations for logCommits and notesList for testing purposes
 var (
-	simpleLogCommitsResponse = "DUMMY_REFERENCE\n"
-	simpleNotesListResponse  = "NOTES_OBJECT_ID DUMMY_REFERENCE\n"
+	simpleLogCommitsResponse = "COMMIT_REFERENCE\n"
+	simpleNotesListResponse  = "NOTES_OBJECT_ID COMMIT_REFERENCE\n"
 )
 
 // FetchNotes test-double
