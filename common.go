@@ -93,7 +93,7 @@ func findNoteText(gitWrapper GitWrapper, notesRef string, maxDepth uint) (noteTe
 	}).Debug()
 
 	// Get all notes for commits up to maxDepth
-	notesIntersect := utils.GetSlicesIntersect(notes, utils.LimitStringSlice(commits, maxCount))
+	notesIntersect := utils.GetSlicesIntersect(utils.LimitStringSlice(commits, maxCount), notes)
 	log.WithFields(log.Fields{
 		"first 10 notesIntersect":   utils.LimitStringSlice(notesIntersect, 10),
 		"Total # of notesIntersect": len(notesIntersect),
