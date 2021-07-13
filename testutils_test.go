@@ -129,7 +129,7 @@ var testDataEmpty = testData{
 	inputOld:    `{}`,
 	inputNew:    `{"snapshot":{}}`,
 	outputPlain: "",
-	outputJSON:  "{\n  \"snapshot\": {}\n}\n",
+	outputJSON:  "{}\n",
 	outputRaw:   "{\"snapshot\":{}}\n",
 }
 
@@ -137,7 +137,7 @@ var testDataKeyValue = testData{
 	inputOld:    `{"MY_KEY": {"data":"value", "source": "01234567"}}`,
 	inputNew:    `{"snapshot":{"MY_KEY": {"data":"value", "source": "01234567"}}}`,
 	outputPlain: "MY_KEY=value\n",
-	outputJSON:  "{\n  \"snapshot\": {\n    \"MY_KEY\": \"value\"\n  }\n}\n",
+	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
 	outputRaw:   "{\"snapshot\":{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
 }
 
@@ -145,7 +145,7 @@ var testDataKeyValueFooBar = testData{
 	inputOld:    `{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}`,
 	inputNew:    `{"snapshot":{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}}`,
 	outputPlain: "MY_KEY=value\nFOO=bar\n",
-	outputJSON:  "{\n  \"snapshot\": {\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n  }\n}\n",
+	outputJSON:  "{\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n  }\n}",
 	outputRaw:   "{\"snapshot\":{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
 }
 

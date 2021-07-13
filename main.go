@@ -34,21 +34,14 @@ func (v Values) GetJSON(key string) string {
 }
 
 // Iterate the collection value data
-func (v *Values) Iterate() map[string]map[string]string {
+func (v *Values) Iterate() map[string]string {
 	result := make(map[string]string)
 
 	for k, v := range v.values {
 		result[k] = v.Data
 	}
 
-	return map[string]map[string]string{
-		"snapshot": result,
-	}
-}
-
-// IterateSnapshot returns only the snapshot data
-func (v *Values) IterateSnapshot() map[string]string {
-	return v.Iterate()["snapshot"]
+	return result
 }
 
 // IterateRaw iterates the raw collection
