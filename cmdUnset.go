@@ -58,7 +58,7 @@ func unset(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) er
 
 	values.Remove(key)
 
-	noteText, err := convertValuesToOutput(values, "json")
+	noteText, err := convertValuesToOutput(values, "raw")
 	if err != nil {
 		return err
 	}

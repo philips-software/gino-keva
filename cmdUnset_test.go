@@ -19,7 +19,7 @@ func TestUnsetCommand(t *testing.T) {
 			name:   "Unset foo",
 			start:  testDataKeyValueFooBar.inputNew,
 			args:   []string{"unset", "foo"},
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 	}
 
@@ -59,13 +59,13 @@ func TestUnsetValue(t *testing.T) {
 			name:   "Unset non-existing key has no effect",
 			start:  testDataEmpty.inputNew,
 			key:    "non_existing_key",
-			wanted: testDataEmpty.outputJSON,
+			wanted: testDataEmpty.outputRaw,
 		},
 		{
 			name:   "Unset foo doesn't affect other key/value",
 			start:  testDataKeyValueFooBar.inputNew,
 			key:    "foo",
-			wanted: testDataKeyValue.outputJSON,
+			wanted: testDataKeyValue.outputRaw,
 		},
 	}
 
