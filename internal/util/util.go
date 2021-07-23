@@ -1,7 +1,9 @@
-package utils
+package util
 
 // GetSlicesIntersect returns the intersect of s1 and s2
 func GetSlicesIntersect(s1, s2 []string) (intersect []string) {
+	intersect = []string{}
+
 	for i := 0; i < len(s1); i++ {
 		if Contains(s2, s1[i]) {
 			intersect = append(intersect, s1[i])

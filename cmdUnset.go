@@ -1,8 +1,8 @@
 package main
 
 import (
-	"log"
-
+	"github.com/philips-software/gino-keva/internal/event"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +26,7 @@ func addUnsetCommandTo(root *cobra.Command) {
 				}
 			}
 
-			err = unset(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			err = unset(gitWrapper, globalFlags.NotesRef, key)
 			if err != nil {
 				return err
 			}
@@ -44,31 +44,27 @@ func addUnsetCommandTo(root *cobra.Command) {
 	root.AddCommand(unsetCommand)
 }
 
-func unset(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) error {
-	key = sanitizeKey(key)
-	err := validateKey(key)
+func unset(gitWrapper GitWrapper, notesRef string, key string) error {
+	unsetEvent, err := event.NewUnsetEvent(key)
 	if err != nil {
 		return err
 	}
 
-	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
+	events, err := getEvents(gitWrapper, notesRef)
 	if err != nil {
 		return err
 	}
 
-	values.Remove(key)
+	*events = append(*events, *unsetEvent)
 
-	noteText, err := convertValuesToOutput(values, "raw")
+	err = persistEvents(gitWrapper, notesRef, events)
 	if err != nil {
 		return err
 	}
 
-	{
-		out, err := gitWrapper.NotesAdd(notesRef, noteText)
-		if err != nil {
-			log.Fatal(out)
-		}
-	}
+	log.WithFields(log.Fields{
+		"key": key,
+	}).Debug("Unset event added successfully")
 
-	return err
+	return nil
 }

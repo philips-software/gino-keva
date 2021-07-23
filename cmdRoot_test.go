@@ -120,7 +120,7 @@ func TestPushFlag(t *testing.T) {
 			var pushCalled bool
 			gitWrapper := &notesStub{
 				pushNotesImplementation:    spyArgsString(&pushCalled, nil),
-				revParseHeadImplementation: dummyStubArgsNone,
+				revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
 				logCommitsImplementation:   dummyStubArgsNone,
 				notesAddImplementation:     dummyStubArgsStringString,
 				notesListImplementation:    dummyStubArgsString,
@@ -141,9 +141,9 @@ func TestPushFlag(t *testing.T) {
 
 func TestFetchNoUpstreamRef(t *testing.T) {
 	var fetchStubNoUpstreamRef = func(string) (response string, err error) {
-		// Mimic error when repository is exhausted without encountering a note
+		// Mimic error when there's no upstream ref present yet
 		err = errors.New("exit status 128")
-		response = "fatal: couldn't find remote ref refs/notes/FOO"
+		response = "fatal: couldn't find remote ref refs/notes/foo"
 
 		return response, err
 	}
@@ -162,6 +162,6 @@ func TestFetchNoUpstreamRef(t *testing.T) {
 		gotOutput, err := executeCommandContext(ctx, root, args...)
 
 		assert.NoError(t, err)
-		assert.Equal(t, testDataEmpty.outputPlain, gotOutput)
+		assert.Equal(t, TestDataEmptyString, gotOutput)
 	})
 }

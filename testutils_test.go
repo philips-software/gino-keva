@@ -3,13 +3,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"strconv"
 
 	"github.com/spf13/cobra"
-)
-
-const (
-	dummyRef   = "DUMMY_REF"
-	dummyValue = "DUMMY_VALUE"
 )
 
 type notesStub struct {
@@ -28,7 +24,7 @@ func (n notesStub) FetchNotes(notesRef string, force bool) (string, error) {
 }
 
 // LogCommits test-double
-func (n notesStub) LogCommits(uint) (string, error) {
+func (n notesStub) LogCommits() (string, error) {
 	return n.logCommitsImplementation()
 }
 
@@ -117,34 +113,6 @@ var (
 	simpleNotesListResponse  = "NOTES_OBJECT_ID COMMIT_REFERENCE\n"
 )
 
-type testData struct {
-	input       string
-	outputPlain string
-	outputJSON  string
-	outputRaw   string
-}
-
-var testDataEmpty = testData{
-	input:       `{"snapshot":{}}`,
-	outputPlain: "",
-	outputJSON:  "{}\n",
-	outputRaw:   "{\"snapshot\":{}}\n",
-}
-
-var testDataKeyValue = testData{
-	input:       `{"snapshot":{"MY_KEY": {"data":"value", "source": "01234567"}}}`,
-	outputPlain: "MY_KEY=value\n",
-	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
-	outputRaw:   "{\"snapshot\":{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
-}
-
-var testDataKeyValueFooBar = testData{
-	input:       `{"snapshot":{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}}`,
-	outputPlain: "MY_KEY=value\nFOO=bar\n",
-	outputJSON:  "{\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n  }\n}",
-	outputRaw:   "{\"snapshot\":{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
-}
-
 func executeCommandContext(ctx context.Context, root *cobra.Command, args ...string) (output string, err error) {
 	buf := new(bytes.Buffer)
 
@@ -162,4 +130,13 @@ func disableFetch(args []string) []string {
 
 func enablePush(args []string) []string {
 	return append(args, "--push")
+}
+
+func generateIncrementingNumbersListOfLength(length int) []string {
+	output := []string{}
+	for i := 0; i < length; i++ {
+		output = append(output, strconv.Itoa(i))
+	}
+
+	return output
 }

@@ -2,45 +2,45 @@ package main
 
 import (
 	"context"
+	"errors"
 	"testing"
 
+	"github.com/philips-software/gino-keva/internal/event"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSetCommand(t *testing.T) {
 	testCases := []struct {
-		name   string
-		args   []string
-		start  string
-		source string
-		wanted string
+		name         string
+		args         []string
+		startEvents  []event.Event
+		wantedEvents []event.Event
 	}{
 		{
-			name:   "Start empty, set MY_KEY=value (default ref)",
-			start:  testDataEmpty.input,
-			args:   []string{"set", "my_key", "value"},
-			source: "01234567",
-			wanted: testDataKeyValue.outputRaw,
+			name:         "Start empty, set key=value (default ref)",
+			startEvents:  []event.Event{},
+			args:         []string{"set", "key", "value"},
+			wantedEvents: []event.Event{event.TestDataSetKeyValue},
 		},
 		{
-			name:   "Start MY_KEY=value, set foo=bar (non-default ref)",
-			start:  testDataKeyValue.input,
-			args:   []string{"set", "foo", "bar", "--ref", "non_default"},
-			source: "abcd1234",
-			wanted: testDataKeyValueFooBar.outputRaw,
+			name:         "Start key=value, set foo=bar (non-default ref)",
+			startEvents:  []event.Event{event.TestDataSetKeyValue},
+			args:         []string{"set", "foo", "bar", "--ref", "non_default"},
+			wantedEvents: []event.Event{event.TestDataSetKeyValue, event.TestDataSetFooBar},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			starteventsJSON, _ := event.Marshal(&tc.startEvents)
+			wantedeventsJSON, _ := event.Marshal(&tc.wantedEvents)
+
 			root := NewRootCommand()
 			var notesAddArgMsg string
 			gitWrapper := &notesStub{
-				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
-				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: responseStubArgsNone(tc.source),
+				notesShowImplementation:    responseStubArgsStringString(starteventsJSON),
+				revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
 			}
 			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
 
@@ -48,116 +48,39 @@ func TestSetCommand(t *testing.T) {
 			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAddArgMsg)
+			assert.Equal(t, wantedeventsJSON, notesAddArgMsg)
 		})
 	}
 }
 
-func TestKeyValidation(t *testing.T) {
-	testCases := []struct {
-		name  string
-		key   string
-		valid bool
-	}{
-		{
-			name:  "Key can end on number",
-			key:   "TheAnswerIs42",
-			valid: true,
-		},
-		{
-			name:  "Key can container underscores and dashes",
-			key:   "This-key_is-valid",
-			valid: true,
-		},
-		{
-			name:  "Key cannot be empty",
-			key:   "",
-			valid: false,
-		},
-		{
-			name:  "Key contains an invalid character",
-			key:   "foo!",
-			valid: false,
-		},
-		{
-			name:  "First character of key is not a letter",
-			key:   "2BeOrNot2Be",
-			valid: false,
-		},
-		{
-			name:  "Last character of key is not a letter of number",
-			key:   "invalid-",
-			valid: false,
-		},
-	}
+func TestSetInvalidKey(t *testing.T) {
+	gitWrapper := &notesStub{}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			gitWrapper := &notesStub{
-				notesAddImplementation:     dummyStubArgsStringString,
-				revParseHeadImplementation: dummyStubArgsNone,
-				logCommitsImplementation:   dummyStubArgsNone,
-				notesListImplementation:    dummyStubArgsString,
-				notesShowImplementation:    dummyStubArgsStringString,
-			}
-
-			err := set(gitWrapper, dummyRef, tc.key, dummyValue, 0)
-			if tc.valid {
-				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.IsType(t, &InvalidKey{}, err)
-				}
-			}
-		})
-	}
+	t.Run("Key cannot be empty", func(t *testing.T) {
+		err := set(gitWrapper, TestDataDummyRef, TestDataEmptyString, TestDataDummyValue)
+		if assert.Error(t, err) {
+			assert.IsType(t, &event.InvalidKey{}, err)
+		}
+	})
 }
 
-func TestSet(t *testing.T) {
-	testCases := []struct {
-		name   string
-		start  string
-		key    string
-		value  Value
-		wanted string
-	}{
-		{
-			name:   "Start empty, set MY_KEY=value",
-			start:  testDataEmpty.input,
-			key:    "my-key",
-			value:  Value{Data: "value", Source: "01234567"},
-			wanted: testDataKeyValue.outputRaw,
-		},
-		{
-			name:   "Start MY_KEY=value, set foo=bar",
-			start:  testDataKeyValue.input,
-			key:    "foo",
-			value:  Value{Data: "bar", Source: "abcd1234"},
-			wanted: testDataKeyValueFooBar.outputRaw,
-		},
-		{
-			name:   "Source hash is cut off at 8 characters",
-			start:  testDataEmpty.input,
-			key:    "MY_KEY",
-			value:  Value{Data: "value", Source: "01234567_and_the_remainder"},
-			wanted: testDataKeyValue.outputRaw,
-		},
+func TestSetWithoutHeadEvents(t *testing.T) {
+	var showStubNoNote = func(string, string) (response string, err error) {
+		// Mimic error when ther's no note available
+		err = errors.New("exit status 128")
+		response = "error: no note found for object DUMMY_HASH.\n"
+
+		return response, err
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var notesAddArgMsg string
-			gitWrapper := &notesStub{
-				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
-				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
-				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
-			}
-
-			err := set(gitWrapper, dummyRef, tc.key, tc.value.Data, 0)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAddArgMsg)
-		})
+	gitWrapper := &notesStub{
+		notesShowImplementation:    showStubNoNote,
+		revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
+		notesAddImplementation:     dummyStubArgsStringString,
 	}
+
+	t.Run("Set without prior events on HEAD commit doesn't fail", func(t *testing.T) {
+		err := set(gitWrapper, TestDataDummyRef, event.TestDataFoo, event.TestDataBar)
+		assert.NoError(t, err)
+	})
 }

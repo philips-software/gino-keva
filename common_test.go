@@ -1,8 +1,10 @@
 package main
 
 import (
+	"reflect"
 	"testing"
 
+	"github.com/philips-software/gino-keva/internal/event"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +39,7 @@ func TestGetCommitHashes(t *testing.T) {
 				},
 			}
 
-			hashes, err := getCommitHashes(gitWrapper, 10000)
+			hashes, err := getCommitHashes(gitWrapper)
 
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.wantedGitCommits, hashes)
@@ -76,7 +78,7 @@ func TestGetNotesHashes(t *testing.T) {
 				},
 			}
 
-			hashes, err := getNotesHashes(gitWrapper, dummyRef)
+			hashes, err := getNotesHashes(gitWrapper, TestDataDummyRef)
 
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.wantedNotesCommits, hashes)
@@ -86,82 +88,54 @@ func TestGetNotesHashes(t *testing.T) {
 
 func TestFindNoteText(t *testing.T) {
 	testCases := []struct {
-		name                    string
-		getCommitHashesOutput   []string
-		getNotesHashesOutput    []string
-		maxDepth                uint
-		expectedNotesShowCalled bool
-		expectedHashArg         string
+		name                  string
+		getCommitHashesOutput []string
+		getNotesHashesOutput  []string
+		expectedNotes         []string
 	}{
 		{
-			name:                    "No commits, no notes",
-			maxDepth:                1000,
-			expectedNotesShowCalled: false,
+			name:          "No commits, no notes",
+			expectedNotes: []string{},
 		},
 		{
-			name:                    "Some commits, no notes",
-			getCommitHashesOutput:   []string{"0", "1", "2", "3"},
-			maxDepth:                1000,
-			expectedNotesShowCalled: false,
+			name:                  "Some commits, no notes",
+			getCommitHashesOutput: generateIncrementingNumbersListOfLength(4),
+			expectedNotes:         []string{},
 		},
 		{
-			name:                    "Some notes, no commits",
-			getNotesHashesOutput:    []string{"0", "1", "2", "3"},
-			maxDepth:                1000,
-			expectedNotesShowCalled: false,
+			name:                 "Some notes, no commits",
+			getNotesHashesOutput: generateIncrementingNumbersListOfLength(4),
+			expectedNotes:        []string{},
 		},
 		{
-			name:                    "One commit with note at depth 0 (HEAD)",
-			getCommitHashesOutput:   []string{"0"},
-			getNotesHashesOutput:    []string{"0"},
-			maxDepth:                0,
-			expectedNotesShowCalled: true,
-			expectedHashArg:         "0",
+			name:                  "Note at depth 1",
+			getCommitHashesOutput: generateIncrementingNumbersListOfLength(2),
+			getNotesHashesOutput:  []string{"1"},
+			expectedNotes:         []string{"1"},
 		},
 		{
-			name:                    "Note at depth 1, maxDepth=0",
-			getCommitHashesOutput:   []string{"0", "1"},
-			getNotesHashesOutput:    []string{"1"},
-			maxDepth:                0,
-			expectedNotesShowCalled: false,
+			name:                  "Note at depth 10",
+			getCommitHashesOutput: generateIncrementingNumbersListOfLength(11),
+			getNotesHashesOutput:  []string{"10"},
+			expectedNotes:         []string{"10"},
 		},
 		{
-			name:                    "Note at depth 1, maxDepth=1",
-			getCommitHashesOutput:   []string{"0", "1"},
-			getNotesHashesOutput:    []string{"1"},
-			maxDepth:                1,
-			expectedNotesShowCalled: true,
-			expectedHashArg:         "1",
+			name:                  "Note at depth 0 and 1",
+			getCommitHashesOutput: generateIncrementingNumbersListOfLength(2),
+			getNotesHashesOutput:  generateIncrementingNumbersListOfLength(2),
+			expectedNotes:         generateIncrementingNumbersListOfLength(2),
 		},
 		{
-			name:                    "Note at depth 10, maxDepth=10",
-			getCommitHashesOutput:   []string{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"},
-			getNotesHashesOutput:    []string{"10"},
-			maxDepth:                10,
-			expectedNotesShowCalled: true,
-			expectedHashArg:         "10",
-		},
-		{
-			name:                    "Note at depth 0 and 1",
-			getCommitHashesOutput:   []string{"0", "1"},
-			getNotesHashesOutput:    []string{"0", "1"},
-			maxDepth:                1000,
-			expectedNotesShowCalled: true,
-			expectedHashArg:         "0",
-		},
-		{
-			name:                    "Note at depth 0 and 1 (notes output reversed)",
-			getCommitHashesOutput:   []string{"0", "1"},
-			getNotesHashesOutput:    []string{"1", "0"},
-			maxDepth:                1000,
-			expectedNotesShowCalled: true,
-			expectedHashArg:         "0",
+			name:                  "Note at depth 0 and 1 (notes output reversed)",
+			getCommitHashesOutput: generateIncrementingNumbersListOfLength(2),
+			getNotesHashesOutput:  []string{"1", "0"},
+			expectedNotes:         generateIncrementingNumbersListOfLength(2),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			getCommitHashes = func(GitWrapper, uint) ([]string, error) {
+			getCommitHashes = func(GitWrapper) ([]string, error) {
 				return tc.getCommitHashesOutput, nil
 			}
 
@@ -174,13 +148,112 @@ func TestFindNoteText(t *testing.T) {
 			gitWrapper := &notesStub{
 				notesShowImplementation: spyArgsStringString(&notesShowCalled, nil, &hashArg),
 			}
-			_, err := findNoteText(gitWrapper, dummyRef, tc.maxDepth)
+			notes, err := getRelevantNotes(gitWrapper, TestDataDummyRef)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedNotesShowCalled, notesShowCalled)
-			if notesShowCalled {
-				assert.Equal(t, tc.expectedHashArg, hashArg)
+			assert.EqualValues(t, tc.expectedNotes, notes)
+		})
+	}
+}
+
+func TestCalculateKeyValues(t *testing.T) {
+	testCases := []struct {
+		name   string
+		events [][]event.Event
+		wanted map[string]Value
+	}{
+		{
+			name:   "No notes",
+			events: [][]event.Event{{}},
+			wanted: map[string]Value{},
+		},
+		{
+			name: "Note with single set event",
+			events: [][]event.Event{
+				{event.TestDataSetFooBar},
+			},
+			wanted: map[string]Value{
+				event.TestDataFoo: Value(event.TestDataBar),
+			},
+		},
+		{
+			name: "Note with 2 set event",
+			events: [][]event.Event{
+				{event.TestDataSetFooBar, event.TestDataSetKeyValue},
+			},
+			wanted: map[string]Value{
+				event.TestDataFoo: Value(event.TestDataBar),
+				event.TestDataKey: Value(event.TestDataValue),
+			},
+		},
+		{
+			name: "Overwrite value in same note",
+			events: [][]event.Event{
+				{event.TestDataSetKeyValue, event.TestDataSetKeyOtherValue},
+			},
+			wanted: map[string]Value{
+				event.TestDataKey: Value(event.TestDataOtherValue),
+			},
+		},
+		{
+			name: "Set and unset value in same note",
+			events: [][]event.Event{
+				{event.TestDataSetKeyValue, event.TestDataUnsetKey},
+			},
+			wanted: map[string]Value{},
+		},
+		{
+			name: "Set events across 2 notes",
+			events: [][]event.Event{
+				{event.TestDataSetFooBar},
+				{event.TestDataSetKeyValue},
+			},
+			wanted: map[string]Value{
+				event.TestDataFoo: Value(event.TestDataBar),
+				event.TestDataKey: Value(event.TestDataValue),
+			},
+		},
+		{
+			name: "Overwrite value across 2 notes",
+			events: [][]event.Event{
+				{event.TestDataSetKeyValue},
+				{event.TestDataSetKeyOtherValue},
+			},
+			wanted: map[string]Value{
+				event.TestDataKey: Value(event.TestDataOtherValue),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			getCommitHashes = func(GitWrapper) ([]string, error) {
+				return generateIncrementingNumbersListOfLength(len(tc.events)), nil
 			}
+
+			getNotesHashes = func(GitWrapper, string) ([]string, error) {
+				return generateIncrementingNumbersListOfLength(len(tc.events)), nil
+			}
+
+			var iterateNotes func(string, string) (string, error)
+			{
+				currentNote := 0
+				iterateNotes = func(string, string) (string, error) {
+					defer func() { currentNote++ }()
+					return event.Marshal(&tc.events[currentNote])
+				}
+			}
+
+			gitWrapper := &notesStub{
+				logCommitsImplementation: dummyStubArgsNone,
+				notesListImplementation:  dummyStubArgsString,
+				notesShowImplementation:  iterateNotes,
+			}
+
+			got, err := calculateKeyValues(gitWrapper, TestDataDummyRef)
+
+			assert.NoError(t, err)
+			assert.Truef(t, reflect.DeepEqual(got.values, tc.wanted), "Got %v, wanted %v", got.values, tc.wanted)
 		})
 	}
 }

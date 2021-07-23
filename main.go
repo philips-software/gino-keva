@@ -24,31 +24,18 @@ func (v *Values) Add(key string, value Value) {
 }
 
 // Count returns number of items in collection
-func (v *Values) Count() int {
+func (v Values) Count() int {
 	return len(v.values)
 }
 
-// GetJSON returns the value data in json format
-func (v Values) GetJSON(key string) string {
-	return v.values[key].Data
+// Get returns a single value from the collection
+func (v Values) Get(key string) Value {
+	return v.values[key]
 }
 
 // Iterate the collection value data
-func (v *Values) Iterate() map[string]string {
-	result := make(map[string]string)
-
-	for k, v := range v.values {
-		result[k] = v.Data
-	}
-
-	return result
-}
-
-// IterateRaw iterates the raw collection
-func (v *Values) IterateRaw() map[string]map[string]Value {
-	return map[string]map[string]Value{
-		"snapshot": v.values,
-	}
+func (v Values) Iterate() map[string]Value {
+	return v.values
 }
 
 // Remove a key from the collection
@@ -56,11 +43,15 @@ func (v *Values) Remove(key string) {
 	delete(v.values, key)
 }
 
-// Value represents the parsed value as stored in git notes
-type Value struct {
-	Data   string `json:"data"`
-	Source string `json:"source"`
+// NewValues returns a new values map
+func NewValues() *Values {
+	return &Values{
+		values: make(map[string]Value),
+	}
 }
+
+// Value represents the parsed value as stored in git notes
+type Value string
 
 func checkIfError(err error) {
 	if err != nil {

@@ -72,7 +72,6 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 }
 
 func addRootFlagsTo(cmd *cobra.Command) {
-	cmd.PersistentFlags().UintVar(&globalFlags.MaxDepth, "max-depth", 500, "Set maximum search depth for a note")
 	cmd.PersistentFlags().StringVar(&globalFlags.NotesRef, "ref", "gino_keva", "Name of notes reference")
 	cmd.PersistentFlags().BoolVarP(&globalFlags.VerboseLog, "verbose", "v", false, "Turn on verbose logging")
 

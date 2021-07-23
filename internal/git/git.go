@@ -26,9 +26,8 @@ func (GoGitCmdWrapper) FetchNotes(notesRef string, force bool) (string, error) {
 }
 
 // LogCommits returns log output with commit hashes
-func (GoGitCmdWrapper) LogCommits(maxCount uint) (string, error) {
+func (GoGitCmdWrapper) LogCommits() (string, error) {
 	return gitCmdWrapper.Raw("log", func(g *types.Cmd) {
-		g.AddOptions(fmt.Sprintf("--max-count=%d", maxCount))
 		g.AddOptions("--pretty=format:%H")
 	})
 }
