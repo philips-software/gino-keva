@@ -28,3 +28,12 @@ type ValueMissing struct {
 func (v ValueMissing) Error() string {
 	return fmt.Sprintf("Value missing from event: %v", v.event)
 }
+
+// InvalidKey error indicates the key is not valid
+type InvalidKey struct {
+	msg string
+}
+
+func (i InvalidKey) Error() string {
+	return fmt.Sprintf("Invalid key: %v", i.msg)
+}

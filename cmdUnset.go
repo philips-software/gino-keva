@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/philips-software/gino-keva/internal/event"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/cobra"
 )
 
@@ -46,43 +45,19 @@ func addUnsetCommandTo(root *cobra.Command) {
 }
 
 func unset(gitWrapper GitWrapper, notesRef string, key string) error {
-	key = sanitizeKey(key)
-	err := validateKey(key)
+	unsetEvent, err := event.NewUnsetEvent(key)
 	if err != nil {
 		return err
 	}
 
-	var commitHash string
-	{
-		out, err := gitWrapper.RevParseHead()
-		if err != nil {
-			return convertGitOutputToError(out, err)
-		}
-		commitHash = out
-	}
-
-	events, err := getEventsFromNote(gitWrapper, notesRef, commitHash)
+	err = persistNewEvent(gitWrapper, notesRef, unsetEvent)
 	if err != nil {
 		return err
 	}
 
-	events = append(events, event.Event{
-		EventType: event.Unset,
-		Key:       key,
-	})
+	log.WithFields(log.Fields{
+		"key": key,
+	}).Debug("Unset event added successfully")
 
-	noteText, err := event.Marshal(&events)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.WithField("noteText", noteText).Debug("Persisting new note text...")
-
-	{
-		out, err := gitWrapper.NotesAdd(notesRef, noteText)
-		if err != nil {
-			return convertGitOutputToError(out, err)
-		}
-	}
-
-	return err
+	return nil
 }

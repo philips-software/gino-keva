@@ -54,6 +54,40 @@ var globalFlags = struct {
 	Fetch bool
 }{}
 
+func persistNewEvent(gitWrapper GitWrapper, notesRef string, newEvent *event.Event) error {
+	var commitHash string
+	{
+		out, err := gitWrapper.RevParseHead()
+		if err != nil {
+			return convertGitOutputToError(out, err)
+		}
+		commitHash = out
+	}
+
+	log.WithField("hash", commitHash).Debug("Retrieving events...")
+	events, err := getEventsFromNote(gitWrapper, notesRef, commitHash)
+	if err != nil {
+		return err
+	}
+
+	events = append(events, *newEvent)
+
+	noteText, err := event.Marshal(&events)
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.WithField("noteText", noteText).Debug("Persisting new note text...")
+
+	{
+		out, err := gitWrapper.NotesAdd(notesRef, noteText)
+		if err != nil {
+			return convertGitOutputToError(out, err)
+		}
+	}
+
+	return nil
+}
+
 func calculateKeyValues(gitWrapper GitWrapper, notesRef string) (values *Values, err error) {
 	notes, err := getRelevantNotes(gitWrapper, notesRef)
 	if err != nil {

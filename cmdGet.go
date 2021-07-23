@@ -38,12 +38,6 @@ func addGetCommandTo(root *cobra.Command) {
 }
 
 func getValue(gitWrapper GitWrapper, notesRef string, key string) (string, error) {
-	key = sanitizeKey(key)
-	err := validateKey(key)
-	if err != nil {
-		return "", err
-	}
-
 	values, err := calculateKeyValues(gitWrapper, notesRef)
 	if err != nil {
 		return "", err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/philips-software/gino-keva/internal/event"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -106,7 +107,7 @@ func TestKeyValidation(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				if assert.Error(t, err) {
-					assert.IsType(t, &InvalidKey{}, err)
+					assert.IsType(t, &event.InvalidKey{}, err)
 				}
 			}
 		})
