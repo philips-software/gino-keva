@@ -120,27 +120,18 @@ func unmarshal(rawText string) (values *Values, err error) {
 	v := make(map[string]Value)
 
 	if rawText != "" {
-		if strings.Contains(rawText, "\"snapshot\":{") {
-			err = unmarshalNewFormatInto(rawText, &v)
-		} else {
-			err = unmarshalOldFormatInto(rawText, &v)
-		}
-	}
+		err = unmarshalInto(rawText, &v)
 
-	if err != nil {
-		return nil, err
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &Values{values: v}, nil
 }
 
-func unmarshalOldFormatInto(rawText string, v *map[string]Value) error {
-	log.WithField("rawText", rawText).Debug("Unmarshalling old format...")
-	return json.Unmarshal([]byte(rawText), v)
-}
-
-func unmarshalNewFormatInto(rawText string, v *map[string]Value) error {
-	log.WithField("rawText", rawText).Debug("Unmarshalling new format...")
+func unmarshalInto(rawText string, v *map[string]Value) error {
+	log.WithField("rawText", rawText).Debug("Unmarshalling...")
 
 	newFormat := make(map[string]map[string]Value)
 

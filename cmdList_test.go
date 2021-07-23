@@ -10,7 +10,7 @@ import (
 
 func TestListCommand(t *testing.T) {
 	td := testDataKeyValue
-	input := td.inputOld
+	input := td.input
 
 	testCases := []struct {
 		name       string
@@ -63,39 +63,39 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 		wantText     string
 	}{
 		{
-			name:         "Empty note, old format (plain)",
-			outputFormat: "plain",
-			input:        td.inputOld,
-			wantText:     td.outputPlain,
-		},
-		{
-			name:         "Empty note, old format (json)",
-			outputFormat: "json",
-			input:        td.inputOld,
-			wantText:     td.outputJSON,
-		},
-		{
-			name:         "Empty note, old format (raw)",
-			outputFormat: "raw",
-			input:        td.inputOld,
-			wantText:     td.outputRaw,
-		},
-		{
 			name:         "Empty note (plain)",
 			outputFormat: "plain",
-			input:        td.inputNew,
+			input:        td.input,
 			wantText:     td.outputPlain,
 		},
 		{
 			name:         "Empty note (json)",
 			outputFormat: "json",
-			input:        td.inputNew,
+			input:        td.input,
 			wantText:     td.outputJSON,
 		},
 		{
 			name:         "Empty note (raw)",
 			outputFormat: "raw",
-			input:        td.inputNew,
+			input:        td.input,
+			wantText:     td.outputRaw,
+		},
+		{
+			name:         "Empty note (plain)",
+			outputFormat: "plain",
+			input:        td.input,
+			wantText:     td.outputPlain,
+		},
+		{
+			name:         "Empty note (json)",
+			outputFormat: "json",
+			input:        td.input,
+			wantText:     td.outputJSON,
+		},
+		{
+			name:         "Empty note (raw)",
+			outputFormat: "raw",
+			input:        td.input,
 			wantText:     td.outputRaw,
 		},
 	}
