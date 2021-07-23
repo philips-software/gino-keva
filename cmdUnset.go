@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	"github.com/philips-software/gino-keva/internal/event"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +27,7 @@ func addUnsetCommandTo(root *cobra.Command) {
 				}
 			}
 
-			err = unset(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			err = unset(gitWrapper, globalFlags.NotesRef, key)
 			if err != nil {
 				return err
 			}
@@ -44,29 +45,42 @@ func addUnsetCommandTo(root *cobra.Command) {
 	root.AddCommand(unsetCommand)
 }
 
-func unset(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) error {
+func unset(gitWrapper GitWrapper, notesRef string, key string) error {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {
 		return err
 	}
 
-	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
+	var commitHash string
+	{
+		out, err := gitWrapper.RevParseHead()
+		if err != nil {
+			return convertGitOutputToError(out, err)
+		}
+		commitHash = out
+	}
+
+	events, err := getEventsFromNote(gitWrapper, notesRef, commitHash)
 	if err != nil {
 		return err
 	}
 
-	values.Remove(key)
+	events = append(events, event.Event{
+		EventType: event.Unset,
+		Key:       key,
+	})
 
-	noteText, err := convertValuesToOutput(values, "raw")
+	noteText, err := event.Marshal(&events)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
+	log.WithField("noteText", noteText).Debug("Persisting new note text...")
 
 	{
 		out, err := gitWrapper.NotesAdd(notesRef, noteText)
 		if err != nil {
-			log.Fatal(out)
+			return convertGitOutputToError(out, err)
 		}
 	}
 

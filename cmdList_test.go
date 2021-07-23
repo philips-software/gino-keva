@@ -28,11 +28,6 @@ func TestListCommand(t *testing.T) {
 			args:       []string{"list", "--output", "json"},
 			wantOutput: td.outputJSON,
 		},
-		{
-			name:       "List all notes (raw output)",
-			args:       []string{"list", "--output", "raw"},
-			wantOutput: td.outputRaw,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -75,12 +70,6 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 			wantText:     td.outputJSON,
 		},
 		{
-			name:         "Empty note (raw)",
-			outputFormat: "raw",
-			input:        td.input,
-			wantText:     td.outputRaw,
-		},
-		{
 			name:         "Empty note (plain)",
 			outputFormat: "plain",
 			input:        td.input,
@@ -92,12 +81,6 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 			input:        td.input,
 			wantText:     td.outputJSON,
 		},
-		{
-			name:         "Empty note (raw)",
-			outputFormat: "raw",
-			input:        td.input,
-			wantText:     td.outputRaw,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -107,7 +90,7 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 				notesListImplementation:  dummyStubArgsString,
 				notesShowImplementation:  responseStubArgsStringString(tc.input),
 			}
-			gotOutput, err := getListOutput(&gitWrapper, dummyRef, 0, tc.outputFormat)
+			gotOutput, err := getListOutput(&gitWrapper, dummyRef, tc.outputFormat)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantText, gotOutput)
@@ -149,7 +132,7 @@ func TestInvalidOutputFormat(t *testing.T) {
 			notesShowImplementation:  dummyStubArgsStringString,
 		}
 
-		_, err := getListOutput(&gitWrapper, dummyRef, 0, "invalid format")
+		_, err := getListOutput(&gitWrapper, dummyRef, "invalid format")
 		if assert.Error(t, err) {
 			assert.IsType(t, &InvalidOutputFormat{}, err)
 		}

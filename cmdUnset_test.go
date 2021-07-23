@@ -77,10 +77,10 @@ func TestUnsetValue(t *testing.T) {
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
 				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
+				revParseHeadImplementation: dummyStubArgsNone,
 			}
 
-			err := unset(gitWrapper, dummyRef, tc.key, 0)
+			err := unset(gitWrapper, dummyRef, tc.key)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})

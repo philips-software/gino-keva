@@ -23,7 +23,7 @@ func addGetCommandTo(root *cobra.Command) {
 				}
 			}
 
-			out, err := getValue(gitWrapper, globalFlags.NotesRef, key, globalFlags.MaxDepth)
+			out, err := getValue(gitWrapper, globalFlags.NotesRef, key)
 			if err != nil {
 				return err
 			}
@@ -37,17 +37,17 @@ func addGetCommandTo(root *cobra.Command) {
 	root.AddCommand(getCommand)
 }
 
-func getValue(gitWrapper GitWrapper, notesRef string, key string, maxDepth uint) (string, error) {
+func getValue(gitWrapper GitWrapper, notesRef string, key string) (string, error) {
 	key = sanitizeKey(key)
 	err := validateKey(key)
 	if err != nil {
 		return "", err
 	}
 
-	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
+	values, err := calculateKeyValues(gitWrapper, notesRef)
 	if err != nil {
 		return "", err
 	}
 
-	return values.GetJSON(key), nil
+	return string(values.Get(key)), nil
 }

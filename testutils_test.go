@@ -28,7 +28,7 @@ func (n notesStub) FetchNotes(notesRef string, force bool) (string, error) {
 }
 
 // LogCommits test-double
-func (n notesStub) LogCommits(uint) (string, error) {
+func (n notesStub) LogCommits() (string, error) {
 	return n.logCommitsImplementation()
 }
 
@@ -125,17 +125,17 @@ type testData struct {
 }
 
 var testDataEmpty = testData{
-	input:       `{"snapshot":{}}`,
+	input:       `{"events":{}}`,
 	outputPlain: "",
 	outputJSON:  "{}\n",
-	outputRaw:   "{\"snapshot\":{}}\n",
+	outputRaw:   "{\"events\":{}}\n",
 }
 
 var testDataKeyValue = testData{
-	input:       `{"snapshot":{"MY_KEY": {"data":"value", "source": "01234567"}}}`,
+	input:       `{"events":["type": "set", "key": "MY_KEY", "value": "value"]}`,
 	outputPlain: "MY_KEY=value\n",
 	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
-	outputRaw:   "{\"snapshot\":{\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
+	outputRaw:   "{\"events\":[\"type\":\"set\",\"key\":\"MY_KEY\",\"value\":\"value\"]}\n",
 }
 
 var testDataKeyValueFooBar = testData{

@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/philips-software/gino-keva/internal/utils"
+	"github.com/philips-software/gino-keva/internal/event"
+	"github.com/philips-software/gino-keva/internal/util"
 )
 
 const (
@@ -23,7 +23,7 @@ var (
 // GitWrapper interface
 type GitWrapper interface {
 	FetchNotes(notesRef string, force bool) (string, error)
-	LogCommits(maxCount uint) (string, error)
+	LogCommits() (string, error)
 	NotesAdd(notesRef, msg string) (string, error)
 	NotesList(notesRef string) (string, error)
 	NotesPrune(notesRef string) (string, error)
@@ -48,99 +48,109 @@ func GetGitWrapperFrom(ctx context.Context) GitWrapper {
 }
 
 var globalFlags = struct {
-	MaxDepth   uint
 	NotesRef   string
 	VerboseLog bool
 
 	Fetch bool
 }{}
 
-func getNoteValues(gitWrapper GitWrapper, notesRef string, maxDepth uint) (values *Values, err error) {
-	noteText, err := findNoteText(gitWrapper, notesRef, maxDepth)
+func calculateKeyValues(gitWrapper GitWrapper, notesRef string) (values *Values, err error) {
+	notes, err := getRelevantNotes(gitWrapper, notesRef)
 	if err != nil {
 		return nil, err
 	}
 
-	values, err = unmarshal(noteText)
+	if len(notes) == 0 {
+		log.WithField("ref", notesRef).Warning("No prior notes found")
+	}
+
+	events, err := getEventsFromNotes(gitWrapper, notesRef, notes)
 	if err != nil {
 		return nil, err
 	}
 
-	return values, err
+	return calculateKeyValuesFromEvents(events)
 }
 
-func findNoteText(gitWrapper GitWrapper, notesRef string, maxDepth uint) (noteText string, err error) {
-	notes, err := getNotesHashes(gitWrapper, notesRef)
+func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, err error) {
+	allNotes, err := getNotesHashes(gitWrapper, notesRef)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.WithFields(log.Fields{
-		"first 10 notes":   utils.LimitStringSlice(notes, 10),
-		"Total # of notes": len(notes),
+		"first 10 notes":   util.LimitStringSlice(allNotes, 10),
+		"Total # of notes": len(allNotes),
 	}).Debug()
 
-	// Count is 1 higher than depth, since depth of 0 refers would still include current HEAD commit
-	maxCount := maxDepth + 1
-
 	// Try to get one more commit so we can detect if commits were exhausted in case no note was found
-	commits, err := getCommitHashes(gitWrapper, maxCount+1)
+	commits, err := getCommitHashes(gitWrapper)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	log.WithFields(log.Fields{
-		"first 10 commits":   utils.LimitStringSlice(commits, 10),
+		"first 10 commits":   util.LimitStringSlice(commits, 10),
 		"Total # of commits": len(commits),
 	}).Debug()
 
-	// Get all notes for commits up to maxDepth
-	notesIntersect := utils.GetSlicesIntersect(utils.LimitStringSlice(commits, maxCount), notes)
+	// Get all notes for commits
+	notes = util.GetSlicesIntersect(commits, allNotes)
 	log.WithFields(log.Fields{
-		"first 10 notesIntersect":   utils.LimitStringSlice(notesIntersect, 10),
-		"Total # of notesIntersect": len(notesIntersect),
+		"first 10 notes found":   util.LimitStringSlice(notes, 10),
+		"Total # of notes found": len(notes),
 	}).Debug()
 
-	if len(notesIntersect) == 0 {
-		if len(commits) == int(maxCount+1) {
-			log.WithField("ref", notesRef).Warning("No prior notes found within maximum depth!")
-		} else {
-			log.WithField("ref", notesRef).Warning("Reached root commit. No prior notes found")
-		}
-		noteText = ""
-	} else {
-		noteText, err = gitWrapper.NotesShow(notesRef, notesIntersect[0])
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return noteText, nil
+	return notes, nil
 }
 
-func unmarshal(rawText string) (values *Values, err error) {
-	v := make(map[string]Value)
+func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) (events []event.Event, err error) {
+	for _, n := range notes {
+		e, err := getEventsFromNote(gitWrapper, notesRef, n)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, e...)
+	}
+	return events, nil
+}
 
-	if rawText != "" {
-		err = unmarshalInto(rawText, &v)
+func getEventsFromNote(gitWrapper GitWrapper, notesRef string, note string) (events []event.Event, err error) {
+	var noteText string
+	{
+		out, err := gitWrapper.NotesShow(notesRef, note)
+		if err != nil {
+			return nil, convertGitOutputToError(out, err)
+		}
+		noteText = out
+	}
+
+	if noteText != "" {
+		log.WithField("rawText", noteText).Debug("Unmarshalling...")
+		err = event.Unmarshal(noteText, &events)
 
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return &Values{values: v}, nil
+	return events, nil
 }
 
-func unmarshalInto(rawText string, v *map[string]Value) error {
-	log.WithField("rawText", rawText).Debug("Unmarshalling...")
+func calculateKeyValuesFromEvents(events []event.Event) (values *Values, err error) {
+	v := &Values{}
 
-	newFormat := make(map[string]map[string]Value)
-
-	if err := json.Unmarshal([]byte(rawText), &newFormat); err != nil {
-		return err
+	for i := len(events) - 1; i >= 0; i-- { // Reverse iterate events
+		e := events[i]
+		switch e.EventType {
+		case event.Set:
+			v.Add(e.Key, Value(*e.Value))
+		case event.Unset:
+			v.Remove(e.Key)
+		default:
+			log.Fatal("Fatal: Unknown event type encountered")
+		}
 	}
 
-	*v = newFormat["snapshot"]
-	return nil
+	return v, nil
 }
 
 func fetchNotes(gitWrapper GitWrapper) (err error) {
@@ -197,33 +207,33 @@ func pushNotes(gitWrapper GitWrapper, notesRef string) error {
 	return err
 }
 
-var getCommitHashes = func(gitWrapper GitWrapper, maxCount uint) (hashList []string, err error) {
-	output, err := gitWrapper.LogCommits(maxCount)
+var getCommitHashes = func(gitWrapper GitWrapper) (hashList []string, err error) {
+	out, err := gitWrapper.LogCommits()
 	if err != nil {
-		return nil, err
+		return nil, convertGitOutputToError(out, err)
 	}
 
-	if output == "" {
+	if out == "" {
 		hashList = []string{}
 	} else {
-		output := strings.TrimSuffix(output, "\n")
-		hashList = strings.Split(output, "\n")
+		out := strings.TrimSuffix(out, "\n")
+		hashList = strings.Split(out, "\n")
 	}
 
 	return hashList, nil
 }
 
 var getNotesHashes = func(gitWrapper GitWrapper, notesRef string) (hashList []string, err error) {
-	output, err := gitWrapper.NotesList(notesRef)
+	out, err := gitWrapper.NotesList(notesRef)
 	if err != nil {
-		return nil, err
+		return nil, convertGitOutputToError(out, err)
 	}
 
-	if output == "" {
+	if out == "" {
 		hashList = []string{}
 	} else {
-		output := strings.TrimSuffix(output, "\n")
-		lines := strings.Split(output, "\n")
+		out := strings.TrimSuffix(out, "\n")
+		lines := strings.Split(out, "\n")
 		for _, line := range lines {
 			hashes := strings.Split(line, " ")
 			hashList = append(hashList, hashes[1])

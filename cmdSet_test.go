@@ -101,7 +101,7 @@ func TestKeyValidation(t *testing.T) {
 				notesShowImplementation:    dummyStubArgsStringString,
 			}
 
-			err := set(gitWrapper, dummyRef, tc.key, dummyValue, 0)
+			err := set(gitWrapper, dummyRef, tc.key, dummyValue)
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
@@ -118,28 +118,28 @@ func TestSet(t *testing.T) {
 		name   string
 		start  string
 		key    string
-		value  Value
+		value  string
 		wanted string
 	}{
 		{
 			name:   "Start empty, set MY_KEY=value",
 			start:  testDataEmpty.input,
 			key:    "my-key",
-			value:  Value{Data: "value", Source: "01234567"},
+			value:  "value",
 			wanted: testDataKeyValue.outputRaw,
 		},
 		{
 			name:   "Start MY_KEY=value, set foo=bar",
 			start:  testDataKeyValue.input,
 			key:    "foo",
-			value:  Value{Data: "bar", Source: "abcd1234"},
+			value:  "bar",
 			wanted: testDataKeyValueFooBar.outputRaw,
 		},
 		{
 			name:   "Source hash is cut off at 8 characters",
 			start:  testDataEmpty.input,
 			key:    "MY_KEY",
-			value:  Value{Data: "value", Source: "01234567_and_the_remainder"},
+			value:  "value",
 			wanted: testDataKeyValue.outputRaw,
 		},
 	}
@@ -152,10 +152,10 @@ func TestSet(t *testing.T) {
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
 				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: responseStubArgsNone(tc.value.Source),
+				revParseHeadImplementation: dummyStubArgsNone,
 			}
 
-			err := set(gitWrapper, dummyRef, tc.key, tc.value.Data, 0)
+			err := set(gitWrapper, dummyRef, tc.key, tc.value)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wanted, notesAddArgMsg)
 		})

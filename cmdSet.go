@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/philips-software/gino-keva/internal/event"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -40,7 +41,7 @@ func addSetCommandTo(root *cobra.Command) {
 				}
 			}
 
-			err = set(gitWrapper, globalFlags.NotesRef, key, value, globalFlags.MaxDepth)
+			err = set(gitWrapper, globalFlags.NotesRef, key, value)
 			if err != nil {
 				return err
 			}
@@ -63,14 +64,9 @@ func addSetCommandTo(root *cobra.Command) {
 	root.AddCommand(setCommand)
 }
 
-func set(gitWrapper GitWrapper, notesRef string, key string, value string, maxDepth uint) (err error) {
+func set(gitWrapper GitWrapper, notesRef string, key string, value string) (err error) {
 	key = sanitizeKey(key)
 	err = validateKey(key)
-	if err != nil {
-		return err
-	}
-
-	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
 	if err != nil {
 		return err
 	}
@@ -79,32 +75,47 @@ func set(gitWrapper GitWrapper, notesRef string, key string, value string, maxDe
 	{
 		out, err := gitWrapper.RevParseHead()
 		if err != nil {
-			return err
+			return convertGitOutputToError(out, err)
 		}
-		commitHash = truncateHash(strings.TrimSuffix(out, "\n"), 8)
+		commitHash = strings.TrimSuffix(out, "\n")
 	}
 
-	values.Add(key, Value{
-		Data:   value,
-		Source: commitHash,
-	})
-
-	noteText, err := convertValuesToOutput(values, "raw")
 	if err != nil {
 		return err
 	}
 
+	log.WithField("hash", commitHash).Debug("Retrieving events...")
+	events, err := getEventsFromNote(gitWrapper, notesRef, commitHash)
+	if err != nil {
+		return err
+	}
+
+	log.WithField("events", events).Debug("Before")
+	events = append(events, event.Event{
+		EventType: event.Set,
+		Key:       key,
+		Value:     &value,
+	})
+	log.WithField("events", events).Debug("After")
+
+	noteText, err := event.Marshal(&events)
+	log.WithField("noteText", events).Debug()
+
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.WithField("noteText", noteText).Debug("Persisting new note text...")
+
 	{
 		out, err := gitWrapper.NotesAdd(notesRef, noteText)
 		if err != nil {
-			log.Fatal(out)
+			return convertGitOutputToError(out, err)
 		}
 	}
 
 	log.WithFields(log.Fields{
-		"key":        key,
-		"value":      value,
-		"commitHash": commitHash,
+		"key":   key,
+		"value": value,
 	}).Debug("Key/value added successfully")
 
 	return err
@@ -156,11 +167,4 @@ func validateKey(key string) error {
 	}
 
 	return nil
-}
-
-func truncateHash(hash string, chars int) string {
-	if len(hash) > chars {
-		return hash[:chars]
-	}
-	return hash
 }

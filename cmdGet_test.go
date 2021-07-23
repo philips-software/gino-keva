@@ -40,8 +40,6 @@ func TestGetCommand(t *testing.T) {
 }
 
 func TestGetValue(t *testing.T) {
-	maxDepth := uint(5)
-
 	testCases := []struct {
 		name      string
 		key       string
@@ -72,7 +70,7 @@ func TestGetValue(t *testing.T) {
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
 				notesShowImplementation:  responseStubArgsStringString(tc.input),
 			}
-			gotValue, err := getValue(&gitWrapper, dummyRef, tc.key, maxDepth)
+			gotValue, err := getValue(&gitWrapper, dummyRef, tc.key)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wantValue, gotValue)

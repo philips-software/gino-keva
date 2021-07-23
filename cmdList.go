@@ -34,7 +34,7 @@ func addListCommandTo(root *cobra.Command) {
 				}
 			}
 
-			out, err := getListOutput(gitWrapper, globalFlags.NotesRef, globalFlags.MaxDepth, outputFormat)
+			out, err := getListOutput(gitWrapper, globalFlags.NotesRef, outputFormat)
 			if err != nil {
 				return err
 			}
@@ -44,13 +44,13 @@ func addListCommandTo(root *cobra.Command) {
 		},
 		Args: cobra.NoArgs,
 	}
-	listCommand.Flags().StringVarP(&outputFormat, "output", "o", "plain", "Set output format (plain/json/raw)")
+	listCommand.Flags().StringVarP(&outputFormat, "output", "o", "plain", "Set output format (plain/json)")
 
 	root.AddCommand(listCommand)
 }
 
-func getListOutput(gitWrapper GitWrapper, notesRef string, maxDepth uint, outputFormat string) (out string, err error) {
-	values, err := getNoteValues(gitWrapper, notesRef, maxDepth)
+func getListOutput(gitWrapper GitWrapper, notesRef string, outputFormat string) (out string, err error) {
+	values, err := calculateKeyValues(gitWrapper, notesRef)
 	if err != nil {
 		return "", err
 	}
@@ -73,9 +73,6 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 	case "json":
 		out, err = marshalJSON(values)
 
-	case "raw":
-		out, err = marshalRaw(values)
-
 	default:
 		err = &InvalidOutputFormat{}
 	}
@@ -85,15 +82,6 @@ func convertValuesToOutput(values *Values, outputFlag string) (out string, err e
 
 func marshalJSON(values *Values) (string, error) {
 	result, err := json.MarshalIndent(values.Iterate(), "", "  ")
-	if err != nil {
-		return "", err
-	}
-
-	return fmt.Sprintf("%s\n", result), nil
-}
-
-func marshalRaw(values *Values) (string, error) {
-	result, err := json.Marshal(values.IterateRaw())
 	if err != nil {
 		return "", err
 	}
