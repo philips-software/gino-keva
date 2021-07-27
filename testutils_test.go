@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"strconv"
 
 	"github.com/spf13/cobra"
 )
@@ -129,4 +130,13 @@ func disableFetch(args []string) []string {
 
 func enablePush(args []string) []string {
 	return append(args, "--push")
+}
+
+func generateIncrementingNumbersListOfLength(length int) []string {
+	output := []string{}
+	for i := 0; i < length; i++ {
+		output = append(output, strconv.Itoa(i))
+	}
+
+	return output
 }

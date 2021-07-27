@@ -141,7 +141,8 @@ func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, e
 }
 
 func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) (events []event.Event, err error) {
-	for _, n := range notes { // Oldest note in front
+	for i := len(notes) - 1; i >= 0; i-- { // Iterate from old to new (newest note in front)
+		n := notes[i]
 		e, err := getEventsFromNote(gitWrapper, notesRef, n)
 		if err != nil {
 			return nil, err
@@ -176,7 +177,7 @@ func getEventsFromNote(gitWrapper GitWrapper, notesRef string, note string) (eve
 func calculateKeyValuesFromEvents(events []event.Event) (values *Values, err error) {
 	v := NewValues()
 
-	for _, e := range events { // Oldest event in front
+	for _, e := range events { // Iterate from old to new (oldest event in front)
 		switch e.EventType {
 		case event.Set:
 			v.Add(e.Key, Value(*e.Value))
