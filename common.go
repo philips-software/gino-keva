@@ -54,25 +54,29 @@ var globalFlags = struct {
 	Fetch bool
 }{}
 
-func persistNewEvent(gitWrapper GitWrapper, notesRef string, newEvent *event.Event) error {
+func getEvents(gitWrapper GitWrapper, notesRef string) (*[]event.Event, error) {
 	var commitHash string
 	{
 		out, err := gitWrapper.RevParseHead()
 		if err != nil {
-			return convertGitOutputToError(out, err)
+			return nil, convertGitOutputToError(out, err)
 		}
-		commitHash = out
+		commitHash = strings.TrimSuffix(out, "\n")
 	}
 
-	log.WithField("hash", commitHash).Debug("Retrieving events...")
+	log.WithField("hash", commitHash).Debug("Retrieving events from git note...")
 	events, err := getEventsFromNote(gitWrapper, notesRef, commitHash)
-	if err != nil {
-		return err
+
+	if _, ok := err.(*NoNotePresent); ok {
+		log.WithField("notesRef", globalFlags.NotesRef).Debug("No git note present yet")
+		err = nil
 	}
 
-	events = append(events, *newEvent)
+	return &events, err
+}
 
-	noteText, err := event.Marshal(&events)
+func persistEvents(gitWrapper GitWrapper, notesRef string, events *[]event.Event) error {
+	noteText, err := event.Marshal(events)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -170,7 +174,7 @@ func getEventsFromNote(gitWrapper GitWrapper, notesRef string, note string) (eve
 }
 
 func calculateKeyValuesFromEvents(events []event.Event) (values *Values, err error) {
-	v := &Values{}
+	v := NewValues()
 
 	for i := len(events) - 1; i >= 0; i-- { // Reverse iterate events
 		e := events[i]

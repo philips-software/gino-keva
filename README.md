@@ -38,7 +38,7 @@ Due to the selective build mechanism, the versions of components are not coupled
 
 ### Use case - Store new component version
 
-Gino Keva is used to store the newly built version of any component as a key/value pair in git notes, linked to commit it was built from: `COMPONENT_FOO=1.1.0`. If no prior notes were present, Gino Keva will search through history and find the nearest one first to be used as a starting point.
+Gino Keva is used to store the newly built version of any component as a key/value pair in git notes, linked to commit it was built from: `COMPONENT_foo=1.1.0`. If no prior notes were present, Gino Keva will search through history and find the nearest one first to be used as a starting point.
 
 <!-- omit in toc -->
 
@@ -48,7 +48,7 @@ For each deployment, the list of containers which make up the application is sim
 
 | Before              | After                           |
 | ------------------- | ------------------------------- |
-| COMPONENT_FOO=1.0.0 | COMPONENT_FOO=1.1.0 (updated)   |
+| COMPONENT_foo=1.0.0 | COMPONENT_foo=1.1.0 (updated)   |
 | COMPONENT_BAR=1.2.3 | COMPONENT_BAR=1.2.3 (untouched) |
 | ....                | ....                            |
 
@@ -84,20 +84,20 @@ foo@bar (f10b970d):~$ gino-keva set foo bar
 ```console
 foo@bar (f10b970d):~$ gino-keva list
 COUNTER=12
-FOO=bar
-MY_KEY=my_value
+foo=bar
+key=my_value
 ```
 
 gino-keva converts the key/value pairs into json and stores these in git notes, along with the souce commit hash. You can retrieve this format using the `--output=raw` flag:
 
 ```console
 foo@bar (f10b970d):~$ gino-keva list --output=raw
-{"COUNTER":{"data":"12","source":"f10b970d"},"FOO":{"data":"bar","source":"f10b970d"},"MY_KEY":{"data":"my_value","source":"f10b970d"}}
+{"COUNTER":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"key":{"data":"my_value","source":"f10b970d"}}
 
 foo@bar (f10b970d):~$ git commit --allow-empty -m "Dummy commit"
 foo@bar (a8517558):~$ gino-keva set pi 3.14
 foo@bar (a8517558):~$ gino-keva list --output=json
-{"COUNTER":{"data":"12","source":"f10b970d"},"FOO":{"data":"bar","source":"f10b970d"},"MY_KEY":{"data":"my_value","source":"f10b970d"},"PI":{"data":"3.14","source":"a8517558"}}
+{"COUNTER":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"key":{"data":"my_value","source":"f10b970d"},"PI":{"data":"3.14","source":"a8517558"}}
 ```
 
 ### Unset keys
@@ -108,7 +108,7 @@ Finally, you can unset keys using `unset`:
 foo@bar (a8517558):~$ gino-keva unset foo
 foo@bar (a8517558):~$ gino-keva list
 COUNTER=12
-MY_KEY=my_value
+key=my_value
 PI=3.14
 ```
 
@@ -144,7 +144,7 @@ Example: Use gino-keva as part of a GitHub action:
 ```console
 foo@bar:~$ gino-keva list | awk -F= '{print "::set-output name="$1"::"$2}'
 ::set-output name=COUNTER::12
-::set-output name=MY_KEY::my_value
+::set-output name=key::my_value
 ::set-output name=PI::3.14
 ```
 
@@ -153,6 +153,6 @@ Example: Use gino-keva as part of an Azure Devops pipeline:
 ```console
 foo@bar:~$ gino-keva list | awk -F= '{print "##vso[task.setvariable variable="$1"]"$2}'
 ##vso[task.setvariable variable=COUNTER]12
-##vso[task.setvariable variable=MY_KEY]my_value
+##vso[task.setvariable variable=key]my_value
 ##vso[task.setvariable variable=PI]3.14
 ```

@@ -76,7 +76,7 @@ func TestGetNotesHashes(t *testing.T) {
 				},
 			}
 
-			hashes, err := getNotesHashes(gitWrapper, dummyRef)
+			hashes, err := getNotesHashes(gitWrapper, TestDataDummyRef)
 
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.wantedNotesCommits, hashes)
@@ -146,7 +146,7 @@ func TestFindNoteText(t *testing.T) {
 			gitWrapper := &notesStub{
 				notesShowImplementation: spyArgsStringString(&notesShowCalled, nil, &hashArg),
 			}
-			notes, err := getRelevantNotes(gitWrapper, dummyRef)
+			notes, err := getRelevantNotes(gitWrapper, TestDataDummyRef)
 
 			assert.NoError(t, err)
 			assert.EqualValues(t, tc.expectedNotes, notes)

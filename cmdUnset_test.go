@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/philips-software/gino-keva/internal/event"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -11,20 +12,21 @@ func TestUnsetCommand(t *testing.T) {
 	testCases := []struct {
 		name   string
 		args   []string
-		start  string
-		source string
-		wanted string
+		start  []event.Event
+		wanted []event.Event
 	}{
 		{
-			name:   "Unset foo",
-			start:  testDataKeyValueFooBar.input,
-			args:   []string{"unset", "foo"},
-			wanted: testDataKeyValue.outputRaw,
+			name:   "Unset key",
+			start:  []event.Event{},
+			args:   []string{"unset", "key"},
+			wanted: []event.Event{event.TestDataUnsetKey},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			startEventsJson, _ := event.Marshal(&tc.start)
+			wantedEventsJson, _ := event.Marshal(&tc.wanted)
 			root := NewRootCommand()
 
 			var notesAddArgMsg string
@@ -32,8 +34,8 @@ func TestUnsetCommand(t *testing.T) {
 				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: responseStubArgsNone(tc.source),
+				notesShowImplementation:    responseStubArgsStringString(startEventsJson),
+				revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
 			}
 
 			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
@@ -42,47 +44,24 @@ func TestUnsetCommand(t *testing.T) {
 			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAddArgMsg)
+			assert.Equal(t, wantedEventsJson, notesAddArgMsg)
 		})
 	}
 }
 
-func TestUnsetValue(t *testing.T) {
-	testCases := []struct {
-		name   string
-		start  string
-		key    string
-		value  Value
-		wanted string
-	}{
-		{
-			name:   "Unset non-existing key has no effect",
-			start:  testDataEmpty.input,
-			key:    "non_existing_key",
-			wanted: testDataEmpty.outputRaw,
-		},
-		{
-			name:   "Unset foo doesn't affect other key/value",
-			start:  testDataKeyValueFooBar.input,
-			key:    "foo",
-			wanted: testDataKeyValue.outputRaw,
-		},
+func TestUnsetInvalidKey(t *testing.T) {
+	gitWrapper := &notesStub{
+		notesAddImplementation:     dummyStubArgsStringString,
+		revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
+		logCommitsImplementation:   dummyStubArgsNone,
+		notesListImplementation:    dummyStubArgsString,
+		notesShowImplementation:    dummyStubArgsStringString,
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			var notesAddArgMsg string
-			gitWrapper := &notesStub{
-				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
-				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
-				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(tc.start),
-				revParseHeadImplementation: dummyStubArgsNone,
-			}
-
-			err := unset(gitWrapper, dummyRef, tc.key)
-			assert.NoError(t, err)
-			assert.Equal(t, tc.wanted, notesAddArgMsg)
-		})
-	}
+	t.Run("Key cannot be empty", func(t *testing.T) {
+		err := unset(gitWrapper, TestDataDummyRef, TestDataEmptyString)
+		if assert.Error(t, err) {
+			assert.IsType(t, &event.InvalidKey{}, err)
+		}
+	})
 }

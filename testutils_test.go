@@ -7,11 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	dummyRef   = "DUMMY_REF"
-	dummyValue = "DUMMY_VALUE"
-)
-
 type notesStub struct {
 	fetchNotesImplementation   func(string) (string, error)
 	logCommitsImplementation   func() (string, error)
@@ -116,34 +111,6 @@ var (
 	simpleLogCommitsResponse = "COMMIT_REFERENCE\n"
 	simpleNotesListResponse  = "NOTES_OBJECT_ID COMMIT_REFERENCE\n"
 )
-
-type testData struct {
-	input       string
-	outputPlain string
-	outputJSON  string
-	outputRaw   string
-}
-
-var testDataEmpty = testData{
-	input:       `{"events":{}}`,
-	outputPlain: "",
-	outputJSON:  "{}\n",
-	outputRaw:   "{\"events\":{}}\n",
-}
-
-var testDataKeyValue = testData{
-	input:       `{"events":["type": "set", "key": "MY_KEY", "value": "value"]}`,
-	outputPlain: "MY_KEY=value\n",
-	outputJSON:  "{\n  \"MY_KEY\": \"value\"\n}\n",
-	outputRaw:   "{\"events\":[\"type\":\"set\",\"key\":\"MY_KEY\",\"value\":\"value\"]}\n",
-}
-
-var testDataKeyValueFooBar = testData{
-	input:       `{"snapshot":{"FOO": {"data":"bar", "source": "abcd1234"},"MY_KEY": {"data":"value", "source": "01234567"}}}`,
-	outputPlain: "MY_KEY=value\nFOO=bar\n",
-	outputJSON:  "{\n  \"FOO\": \"bar\",\n  \"MY_KEY\": \"value\"\n  }\n}",
-	outputRaw:   "{\"snapshot\":{\"FOO\":{\"data\":\"bar\",\"source\":\"abcd1234\"},\"MY_KEY\":{\"data\":\"value\",\"source\":\"01234567\"}}}\n",
-}
 
 func executeCommandContext(ctx context.Context, root *cobra.Command, args ...string) (output string, err error) {
 	buf := new(bytes.Buffer)

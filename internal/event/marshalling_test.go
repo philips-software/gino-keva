@@ -8,89 +8,62 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var eventsWrapper = "{\"events\":[%v]}\n"
+var (
+	// Correct events
+	rawEventSetFooBar   = "{\"type\":\"set\",\"key\":\"foo\",\"value\":\"bar\"}"
+	rawEventSetKeyValue = "{\"type\":\"set\",\"key\":\"key\",\"value\":\"value\"}"
+	rawEventUnsetKey    = "{\"type\":\"unset\",\"key\":\"key\"}"
 
-var foo = "foo"
-var bar = "bar"
-var key = "key"
-var value = "value"
+	// Incorrect events
+	rawEventTypeUnknown           = "{\"type\":\"unknown\"}"
+	rawEventSetFooMissingValue    = "{\"type\":\"set\",\"key\":\"foo\"}"
+	rawEventSetMissingKeyValueBar = "{\"type\":\"set\",\"value\":\"bar\"}"
+	rawEventUnsetMissingKey       = "{\"type\":\"unset\"}"
+)
 
-var eventSetFooBar = "{\"type\":\"set\",\"key\":\"foo\",\"value\":\"bar\"}"
-var eventSetKeyValue = "{\"type\":\"set\",\"key\":\"key\",\"value\":\"value\"}"
-var eventUnsetKey = "{\"type\":\"unset\",\"key\":\"key\"}"
-
-var eventUnknown = "{\"type\":\"unknown\"}"
-var eventSetFooMissingValue = "{\"type\":\"set\",\"key\":\"foo\"}"
-var eventSetMissingKeyValueBar = "{\"type\":\"set\",\"value\":\"bar\"}"
-var eventUnsetMissingKey = "{\"type\":\"unset\"}"
+func wrapEvents(events ...string) string {
+	return fmt.Sprintf("{\"events\":[%v]}\n", strings.Join(events, ","))
+}
 
 func TestMarshal(t *testing.T) {
 	testCases := []struct {
 		name   string
 		input  *[]Event
-		wanted []string
+		wanted string
 	}{
 		{
 			name:   "nil input",
 			input:  nil,
-			wanted: []string{},
+			wanted: wrapEvents(),
 		},
 		{
 			name:   "no events",
 			input:  &[]Event{},
-			wanted: []string{},
+			wanted: wrapEvents(),
 		},
 		{
-			name: "set foo=bar",
-			input: &[]Event{
-				{
-					EventType: Set,
-					Key:       foo,
-					Value:     &bar,
-				},
-			},
-			wanted: []string{eventSetFooBar},
+			name:   "set foo=bar",
+			input:  &[]Event{TestDataSetFooBar},
+			wanted: wrapEvents(rawEventSetFooBar),
 		},
 		{
-			name: "set foo=bar, set key=value",
-			input: &[]Event{
-				{
-					EventType: Set,
-					Key:       foo,
-					Value:     &bar,
-				},
-				{
-					EventType: Set,
-					Key:       key,
-					Value:     &value,
-				},
-			},
-			wanted: []string{eventSetFooBar, eventSetKeyValue},
+			name:   "set foo=bar, set key=value",
+			input:  &[]Event{TestDataSetFooBar, TestDataSetKeyValue},
+			wanted: wrapEvents(rawEventSetFooBar, rawEventSetKeyValue),
 		},
 		{
-			name: "set key=value, unset key",
-			input: &[]Event{
-				{
-					EventType: Set,
-					Key:       key,
-					Value:     &value,
-				},
-				{
-					EventType: Unset,
-					Key:       key,
-				},
-			},
-			wanted: []string{eventSetKeyValue, eventUnsetKey},
+			name:   "set key=value, unset key",
+			input:  &[]Event{TestDataSetKeyValue, TestDataUnsetKey},
+			wanted: wrapEvents(rawEventSetKeyValue, rawEventUnsetKey),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			wanted := fmt.Sprintf(eventsWrapper, strings.Join(tc.wanted, ","))
 			got, err := Marshal(tc.input)
 
 			assert.NoError(t, err)
-			assert.Equal(t, wanted, got)
+			assert.Equal(t, tc.wanted, got)
 		})
 	}
 }
@@ -98,36 +71,35 @@ func TestMarshal(t *testing.T) {
 func TestUnMarshalInvalidFormat(t *testing.T) {
 	testCases := []struct {
 		name            string
-		input           []string
+		input           string
 		wantedErrorType error
 	}{
 		{
 			name:            "unknown event",
-			input:           []string{eventUnknown},
+			input:           wrapEvents(rawEventTypeUnknown),
 			wantedErrorType: &UnknownType{},
 		},
 		{
 			name:            "Set with missing value",
-			input:           []string{eventSetFooMissingValue},
+			input:           wrapEvents(rawEventSetFooMissingValue),
 			wantedErrorType: &ValueMissing{},
 		},
 		{
 			name:            "Set with missing key",
-			input:           []string{eventSetMissingKeyValueBar},
+			input:           wrapEvents(rawEventSetMissingKeyValueBar),
 			wantedErrorType: &KeyMissing{},
 		},
 		{
 			name:            "Unset with missing key",
-			input:           []string{eventUnsetMissingKey},
+			input:           wrapEvents(rawEventUnsetMissingKey),
 			wantedErrorType: &KeyMissing{},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			input := fmt.Sprintf(eventsWrapper, strings.Join(tc.input, ","))
 			var got []Event
-			err := Unmarshal(input, &got)
+			err := Unmarshal(tc.input, &got)
 
 			if assert.Error(t, err) {
 				assert.IsType(t, tc.wantedErrorType, err)
@@ -138,68 +110,46 @@ func TestUnMarshalInvalidFormat(t *testing.T) {
 func TestUnMarshal(t *testing.T) {
 	testCases := []struct {
 		name   string
-		input  []string
+		input  string
 		wanted []Event
 	}{
 		{
 			name:   "nil input",
-			input:  nil,
+			input:  wrapEvents(),
 			wanted: []Event{},
 		},
 		{
 			name:   "no events",
-			input:  []string{},
+			input:  wrapEvents(),
 			wanted: []Event{},
 		},
 		{
 			name:  "set foo=bar",
-			input: []string{eventSetFooBar},
+			input: wrapEvents(rawEventSetFooBar),
 			wanted: []Event{
 				{
 					EventType: Set,
-					Key:       foo,
-					Value:     &bar,
+					Key:       TestDataFoo,
+					Value:     &TestDataBar,
 				},
 			},
 		},
 		{
-			name:  "set foo=bar, set key=value",
-			input: []string{eventSetFooBar, eventSetKeyValue},
-			wanted: []Event{
-				{
-					EventType: Set,
-					Key:       foo,
-					Value:     &bar,
-				},
-				{
-					EventType: Set,
-					Key:       key,
-					Value:     &value,
-				},
-			},
+			name:   "set foo=bar, set key=value",
+			input:  wrapEvents(rawEventSetFooBar, rawEventSetKeyValue),
+			wanted: []Event{TestDataSetFooBar, TestDataSetKeyValue},
 		},
 		{
-			name:  "set key=value, unset key",
-			input: []string{eventSetKeyValue, eventUnsetKey},
-			wanted: []Event{
-				{
-					EventType: Set,
-					Key:       key,
-					Value:     &value,
-				},
-				{
-					EventType: Unset,
-					Key:       key,
-				},
-			},
+			name:   "set key=value, unset key",
+			input:  wrapEvents(rawEventSetKeyValue, rawEventUnsetKey),
+			wanted: []Event{TestDataSetKeyValue, TestDataUnsetKey},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			input := fmt.Sprintf(eventsWrapper, strings.Join(tc.input, ","))
 			var got []Event
-			err := Unmarshal(input, &got)
+			err := Unmarshal(tc.input, &got)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tc.wanted, got)

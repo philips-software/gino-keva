@@ -35,7 +35,7 @@ func validateKey(key string) error {
 	}
 
 	{
-		pattern := `[^A-Za-z0-9_]`
+		pattern := `[^A-Za-z0-9_-]`
 		matched, err := regexp.Match(pattern, []byte(key))
 		if err != nil {
 			return err

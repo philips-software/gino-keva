@@ -50,7 +50,14 @@ func unset(gitWrapper GitWrapper, notesRef string, key string) error {
 		return err
 	}
 
-	err = persistNewEvent(gitWrapper, notesRef, unsetEvent)
+	events, err := getEvents(gitWrapper, notesRef)
+	if err != nil {
+		return err
+	}
+
+	*events = append(*events, *unsetEvent)
+
+	err = persistEvents(gitWrapper, notesRef, events)
 	if err != nil {
 		return err
 	}

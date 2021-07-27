@@ -43,6 +43,13 @@ func (v *Values) Remove(key string) {
 	delete(v.values, key)
 }
 
+// NewValues returns a new values map
+func NewValues() *Values {
+	return &Values{
+		values: make(map[string]Value),
+	}
+}
+
 // Value represents the parsed value as stored in git notes
 type Value string
 
