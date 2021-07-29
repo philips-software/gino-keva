@@ -4,6 +4,11 @@ import (
 	"regexp"
 )
 
+// AddNewEvent to start of list
+func AddNewEvent(events *[]Event, e *Event) []Event {
+	return append([]Event{*e}, *events...)
+}
+
 // NewSetEvent will create a new event of type Set
 func NewSetEvent(key string, value string) (*Event, error) {
 	err := validateKey(key)

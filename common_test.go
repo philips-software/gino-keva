@@ -2,6 +2,7 @@ package main
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/philips-software/gino-keva/internal/event"
@@ -189,7 +190,7 @@ func TestCalculateKeyValues(t *testing.T) {
 		{
 			name: "Overwrite value in same note",
 			events: [][]event.Event{
-				{event.TestDataSetKeyValue, event.TestDataSetKeyOtherValue},
+				{event.TestDataSetKeyOtherValue, event.TestDataSetKeyValue},
 			},
 			wanted: map[string]Value{
 				event.TestDataKey: Value(event.TestDataOtherValue),
@@ -198,7 +199,7 @@ func TestCalculateKeyValues(t *testing.T) {
 		{
 			name: "Set and unset value in same note",
 			events: [][]event.Event{
-				{event.TestDataSetKeyValue, event.TestDataUnsetKey},
+				{event.TestDataUnsetKey, event.TestDataSetKeyValue},
 			},
 			wanted: map[string]Value{},
 		},
@@ -216,8 +217,8 @@ func TestCalculateKeyValues(t *testing.T) {
 		{
 			name: "Overwrite value across 2 notes",
 			events: [][]event.Event{
-				{event.TestDataSetKeyValue},
 				{event.TestDataSetKeyOtherValue},
+				{event.TestDataSetKeyValue},
 			},
 			wanted: map[string]Value{
 				event.TestDataKey: Value(event.TestDataOtherValue),
@@ -235,19 +236,13 @@ func TestCalculateKeyValues(t *testing.T) {
 				return generateIncrementingNumbersListOfLength(len(tc.events)), nil
 			}
 
-			var iterateNotes func(string, string) (string, error)
-			{
-				currentNote := 0
-				iterateNotes = func(string, string) (string, error) {
-					defer func() { currentNote++ }()
-					return event.Marshal(&tc.events[currentNote])
-				}
-			}
-
 			gitWrapper := &notesStub{
 				logCommitsImplementation: dummyStubArgsNone,
 				notesListImplementation:  dummyStubArgsString,
-				notesShowImplementation:  iterateNotes,
+				notesShowImplementation: func(string, hash string) (string, error) {
+					i, _ := strconv.Atoi(hash)
+					return event.Marshal(&tc.events[i])
+				},
 			}
 
 			got, err := calculateKeyValues(gitWrapper, TestDataDummyRef)

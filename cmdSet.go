@@ -61,7 +61,7 @@ func set(gitWrapper GitWrapper, notesRef string, key string, value string) error
 		return err
 	}
 
-	*events = append(*events, *setEvent)
+	*events = event.AddNewEvent(events, setEvent)
 
 	err = persistEvents(gitWrapper, notesRef, events)
 	if err != nil {

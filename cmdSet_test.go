@@ -26,7 +26,7 @@ func TestSetCommand(t *testing.T) {
 			name:         "Start key=value, set foo=bar (non-default ref)",
 			startEvents:  []event.Event{event.TestDataSetKeyValue},
 			args:         []string{"set", "foo", "bar", "--ref", "non_default"},
-			wantedEvents: []event.Event{event.TestDataSetKeyValue, event.TestDataSetFooBar},
+			wantedEvents: []event.Event{event.TestDataSetFooBar, event.TestDataSetKeyValue},
 		},
 	}
 

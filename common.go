@@ -141,8 +141,7 @@ func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, e
 }
 
 func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) (events []event.Event, err error) {
-	for i := len(notes) - 1; i >= 0; i-- { // Iterate from old to new (newest note in front)
-		n := notes[i]
+	for _, n := range notes { // Iterate from new to old (newest note in front)
 		log.WithField("hash", n).Debug("Get events from note")
 		e, err := getEventsFromNote(gitWrapper, notesRef, n)
 		if err != nil {
@@ -179,13 +178,16 @@ func getEventsFromNote(gitWrapper GitWrapper, notesRef string, note string) (eve
 
 func calculateKeyValuesFromEvents(events []event.Event) (values *Values, err error) {
 	v := NewValues()
+	keysUnset := []string{}
 
-	for _, e := range events { // Iterate from old to new (oldest event in front)
+	for _, e := range events { // Iterate from new to old (newest event in front)
 		switch e.EventType {
 		case event.Set:
-			v.Add(e.Key, Value(*e.Value))
+			if !v.HasKey(e.Key) && !util.Contains(keysUnset, e.Key) {
+				v.Add(e.Key, Value(*e.Value))
+			}
 		case event.Unset:
-			v.Remove(e.Key)
+			keysUnset = append(keysUnset, e.Key)
 		default:
 			log.Fatal("Fatal: Unknown event type encountered")
 		}
