@@ -145,7 +145,6 @@ func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) 
 		log.WithField("hash", n).Debug("Get events from note")
 		e, err := getEventsFromNote(gitWrapper, notesRef, n)
 		if _, ok := err.(*event.NoEventsInNote); ok {
-			err = nil
 			log.Debug("Ignoring events from here on since 'events' key was missing")
 			break
 		} else if err != nil {
