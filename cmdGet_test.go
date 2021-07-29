@@ -26,13 +26,13 @@ func TestGetCommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			eventsJson, _ := event.Marshal(&tc.start)
+			eventsJSON, _ := event.Marshal(&tc.start)
 
 			root := NewRootCommand()
 			ctx := ContextWithGitWrapper(context.Background(), &notesStub{
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
-				notesShowImplementation:  responseStubArgsStringString(eventsJson),
+				notesShowImplementation:  responseStubArgsStringString(eventsJSON),
 			})
 			args := disableFetch(tc.args)
 			gotOutput, err := executeCommandContext(ctx, root, args...)
@@ -68,12 +68,12 @@ func TestGetValue(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			eventsJson, _ := event.Marshal(&[]event.Event{event.TestDataSetKeyValue})
+			eventsJSON, _ := event.Marshal(&[]event.Event{event.TestDataSetKeyValue})
 
 			gitWrapper := notesStub{
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
-				notesShowImplementation:  responseStubArgsStringString(eventsJson),
+				notesShowImplementation:  responseStubArgsStringString(eventsJSON),
 			}
 			gotValue, err := getValue(&gitWrapper, TestDataDummyRef, tc.key)
 

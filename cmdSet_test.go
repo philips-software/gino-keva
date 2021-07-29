@@ -32,14 +32,14 @@ func TestSetCommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			startEventsJson, _ := event.Marshal(&tc.startEvents)
-			wantedEventsJson, _ := event.Marshal(&tc.wantedEvents)
+			starteventsJSON, _ := event.Marshal(&tc.startEvents)
+			wantedeventsJSON, _ := event.Marshal(&tc.wantedEvents)
 
 			root := NewRootCommand()
 			var notesAddArgMsg string
 			gitWrapper := &notesStub{
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(startEventsJson),
+				notesShowImplementation:    responseStubArgsStringString(starteventsJSON),
 				revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
 			}
 			ctx := ContextWithGitWrapper(context.Background(), gitWrapper)
@@ -48,7 +48,7 @@ func TestSetCommand(t *testing.T) {
 			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, wantedEventsJson, notesAddArgMsg)
+			assert.Equal(t, wantedeventsJSON, notesAddArgMsg)
 		})
 	}
 }

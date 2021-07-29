@@ -25,8 +25,8 @@ func TestUnsetCommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			startEventsJson, _ := event.Marshal(&tc.start)
-			wantedEventsJson, _ := event.Marshal(&tc.wanted)
+			starteventsJSON, _ := event.Marshal(&tc.start)
+			wantedeventsJSON, _ := event.Marshal(&tc.wanted)
 			root := NewRootCommand()
 
 			var notesAddArgMsg string
@@ -34,7 +34,7 @@ func TestUnsetCommand(t *testing.T) {
 				logCommitsImplementation:   responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:    responseStubArgsString(simpleNotesListResponse),
 				notesAddImplementation:     spyArgsStringString(nil, nil, &notesAddArgMsg),
-				notesShowImplementation:    responseStubArgsStringString(startEventsJson),
+				notesShowImplementation:    responseStubArgsStringString(starteventsJSON),
 				revParseHeadImplementation: responseStubArgsNone(TestDataDummyHash),
 			}
 
@@ -44,7 +44,7 @@ func TestUnsetCommand(t *testing.T) {
 			_, err := executeCommandContext(ctx, root, args...)
 
 			assert.NoError(t, err)
-			assert.Equal(t, wantedEventsJson, notesAddArgMsg)
+			assert.Equal(t, wantedeventsJSON, notesAddArgMsg)
 		})
 	}
 }

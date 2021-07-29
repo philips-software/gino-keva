@@ -4,6 +4,7 @@ import (
 	"regexp"
 )
 
+// NewSetEvent will create a new event of type Set
 func NewSetEvent(key string, value string) (*Event, error) {
 	err := validateKey(key)
 	if err != nil {
@@ -17,6 +18,7 @@ func NewSetEvent(key string, value string) (*Event, error) {
 	}, nil
 }
 
+// NewUnsetEvent will create a new event of type Unset
 func NewUnsetEvent(key string) (*Event, error) {
 	err := validateKey(key)
 	if err != nil {

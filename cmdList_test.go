@@ -34,13 +34,13 @@ func TestListCommand(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			eventsJson, _ := event.Marshal(&tc.start)
+			eventsJSON, _ := event.Marshal(&tc.start)
 
 			root := NewRootCommand()
 			ctx := ContextWithGitWrapper(context.Background(), &notesStub{
 				logCommitsImplementation: responseStubArgsNone(simpleLogCommitsResponse),
 				notesListImplementation:  responseStubArgsString(simpleNotesListResponse),
-				notesShowImplementation:  responseStubArgsStringString(eventsJson),
+				notesShowImplementation:  responseStubArgsStringString(eventsJSON),
 			})
 
 			args := disableFetch(tc.args)
@@ -89,12 +89,12 @@ func TestGetListOutputTestDataEmpty(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			eventsJson, _ := event.Marshal(&tc.start)
+			eventsJSON, _ := event.Marshal(&tc.start)
 
 			gitWrapper := notesStub{
 				logCommitsImplementation: dummyStubArgsNone,
 				notesListImplementation:  dummyStubArgsString,
-				notesShowImplementation:  responseStubArgsStringString(eventsJson),
+				notesShowImplementation:  responseStubArgsStringString(eventsJSON),
 			}
 			gotOutput, err := getListOutput(&gitWrapper, TestDataDummyRef, tc.outputFormat)
 

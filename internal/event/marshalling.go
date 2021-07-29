@@ -29,8 +29,8 @@ func Unmarshal(s string, events *[]Event) error {
 		return err
 	}
 
-	if eventsJson, ok := r["events"]; ok {
-		if err := json.Unmarshal(eventsJson, &events); err != nil {
+	if eventsJSON, ok := r["events"]; ok {
+		if err := json.Unmarshal(eventsJSON, &events); err != nil {
 			return err
 		}
 	} else {
