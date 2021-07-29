@@ -34,9 +34,7 @@ func Unmarshal(s string, events *[]Event) error {
 			return err
 		}
 	} else {
-		log.Debug("Ignoring since cannot find events key in JSON. Old syntax?")
-		*events = []Event{}
-		return nil
+		return &NoEventsInNote{}
 	}
 
 	for _, e := range *events {

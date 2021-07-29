@@ -2,6 +2,14 @@ package event
 
 import "fmt"
 
+// NoEventsInNote error indicates Gino keva ran into a note which doesn't have an "events" key
+type NoEventsInNote struct {
+}
+
+func (NoEventsInNote) Error() string {
+	return "Cannot find events key in JSON. Old syntax?"
+}
+
 // UnknownType error indicates Gino keva ran into an unknown event type stored in Git Notes
 type UnknownType struct {
 	EventType string

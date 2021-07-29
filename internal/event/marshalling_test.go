@@ -75,6 +75,11 @@ func TestUnMarshalInvalidFormat(t *testing.T) {
 		wantedErrorType error
 	}{
 		{
+			name:            "unexpected JSON structure",
+			input:           `{"FOO": "bar"}`,
+			wantedErrorType: &NoEventsInNote{},
+		},
+		{
 			name:            "unknown event",
 			input:           wrapEvents(rawEventTypeUnknown),
 			wantedErrorType: &UnknownType{},
@@ -114,11 +119,6 @@ func TestUnMarshal(t *testing.T) {
 		input  string
 		wanted []Event
 	}{
-		{
-			name:   "unexpected JSON structure",
-			input:  `{"FOO": "bar"}`,
-			wanted: []Event{},
-		},
 		{
 			name:   "nil input",
 			input:  wrapEvents(),
