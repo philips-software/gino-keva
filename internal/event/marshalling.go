@@ -3,7 +3,8 @@ package event
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+
+	log "github.com/sirupsen/logrus"
 )
 
 // Marshal a list of Event objects into a string
@@ -28,9 +29,14 @@ func Unmarshal(s string, events *[]Event) error {
 		return err
 	}
 
-	// Ignore anything but events
-	if err := json.Unmarshal(r["events"], &events); err != nil {
-		return err
+	if eventsJson, ok := r["events"]; ok {
+		if err := json.Unmarshal(eventsJson, &events); err != nil {
+			return err
+		}
+	} else {
+		log.Debug("Ignoring since cannot find events key in JSON. Old syntax?")
+		*events = []Event{}
+		return nil
 	}
 
 	for _, e := range *events {

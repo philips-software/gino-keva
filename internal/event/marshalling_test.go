@@ -107,12 +107,18 @@ func TestUnMarshalInvalidFormat(t *testing.T) {
 		})
 	}
 }
+
 func TestUnMarshal(t *testing.T) {
 	testCases := []struct {
 		name   string
 		input  string
 		wanted []Event
 	}{
+		{
+			name:   "unexpected JSON structure",
+			input:  `{"FOO": "bar"}`,
+			wanted: []Event{},
+		},
 		{
 			name:   "nil input",
 			input:  wrapEvents(),

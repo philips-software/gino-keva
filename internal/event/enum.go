@@ -42,10 +42,11 @@ func (s EventType) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON unmashals a quoted json string to the enum value
 func (s *EventType) UnmarshalJSON(b []byte) error {
 	var j string
-	err := json.Unmarshal(b, &j)
-	if err != nil {
+
+	if err := json.Unmarshal(b, &j); err != nil {
 		return err
 	}
+
 	// Note that if the string cannot be found then it will be set to the zero value
 	*s = toID[j]
 

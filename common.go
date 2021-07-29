@@ -118,7 +118,7 @@ func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, e
 	log.WithFields(log.Fields{
 		"first 10 notes":   util.LimitStringSlice(allNotes, 10),
 		"Total # of notes": len(allNotes),
-	}).Debug()
+	}).Debug("All notes in notes ref")
 
 	// Try to get one more commit so we can detect if commits were exhausted in case no note was found
 	commits, err := getCommitHashes(gitWrapper)
@@ -133,9 +133,9 @@ func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, e
 	// Get all notes for commits
 	notes = util.GetSlicesIntersect(commits, allNotes)
 	log.WithFields(log.Fields{
-		"first 10 notes found":   util.LimitStringSlice(notes, 10),
-		"Total # of notes found": len(notes),
-	}).Debug()
+		"first 10 notes":   util.LimitStringSlice(notes, 10),
+		"Total # of notes": len(notes),
+	}).Debug("Notes intersecting with branch history")
 
 	return notes, nil
 }
@@ -143,6 +143,7 @@ func getRelevantNotes(gitWrapper GitWrapper, notesRef string) (notes []string, e
 func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) (events []event.Event, err error) {
 	for i := len(notes) - 1; i >= 0; i-- { // Iterate from old to new (newest note in front)
 		n := notes[i]
+		log.WithField("hash", n).Debug("Get events from note")
 		e, err := getEventsFromNote(gitWrapper, notesRef, n)
 		if err != nil {
 			return nil, err
@@ -153,6 +154,8 @@ func getEventsFromNotes(gitWrapper GitWrapper, notesRef string, notes []string) 
 }
 
 func getEventsFromNote(gitWrapper GitWrapper, notesRef string, note string) (events []event.Event, err error) {
+	events = []event.Event{}
+
 	var noteText string
 	{
 		out, err := gitWrapper.NotesShow(notesRef, note)
