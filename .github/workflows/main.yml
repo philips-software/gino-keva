@@ -76,3 +76,55 @@ jobs:
           files: build/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  docker:
+    name: Docker build/push
+    needs:
+      - build_linux
+      - build_windows
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2       
+
+      - uses: robinraju/release-downloader@v1
+        with:
+          repository: ${{ github.repository }}
+          latest: true
+          fileName: gino-keva
+          out-file-path: build/
+          token: '${{ secrets.GITHUB_TOKEN }}'
+
+      - run: chmod +x build/gino-keva
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: |
+            philipssoftware/gino-keva
+          tags: |
+            type=semver,pattern={{version}}
+
+      - name: Login to DockerHub
+        uses: azure/docker-login@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push container
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: Dockerfile
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          push: true
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: philipssoftware/gino-keva
+          short-description: ${{ github.event.repository.description }}
