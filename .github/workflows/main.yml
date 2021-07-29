@@ -27,7 +27,7 @@ jobs:
 
       - name: Build
         run: |
-          go install golang.org/x/lint/golint
+          go get -u golang.org/x/lint/golint
           go install honnef.co/go/tools/cmd/staticcheck@2021.1
           go install github.com/ahmetb/govvv@v0.3.0
           make all
