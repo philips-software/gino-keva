@@ -5,7 +5,9 @@
 
 # Gino Keva - Git Notes Key Values
 
-Gino Keva is a simple Key Value store built on top of Git Notes. The key/values are stored as json in a git note linked to the current commit. If there's not a note present yet, Gino Keva will walk back in the git history, and copy the first note found over to the current commit.
+Gino Keva works as a simple Key Value store built on top of Git Notes, using an event sourcing architecture.
+- Events are added to the current commit when manipulating key/values via get or unset actions
+- Gino Keva compiles a snapshot of all historical key/values by replaying all events up to the current commit
 
 <!-- omit in toc -->
 
@@ -20,7 +22,7 @@ Gino Keva is a simple Key Value store built on top of Git Notes. The key/values 
   - [How to use](#how-to-use)
     - [Warning: Push your changes](#warning-push-your-changes)
     - [Set key/value pairs](#set-keyvalue-pairs)
-    - [Unset keys](#unset-keys)
+    - [List all key/value pairs](#list-all-keyvalue-pairs)
     - [Use custom notes reference](#use-custom-notes-reference)
   - [FAQ](#faq)
     - [I need additional git configuration? How can I do that?](#i-need-additional-git-configuration-how-can-i-do-that)
@@ -38,7 +40,7 @@ Due to the selective build mechanism, the versions of components are not coupled
 
 ### Use case - Store new component version
 
-Gino Keva is used to store the newly built version of any component as a key/value pair in git notes, linked to commit it was built from: `COMPONENT_foo=1.1.0`. If no prior notes were present, Gino Keva will search through history and find the nearest one first to be used as a starting point.
+Gino Keva is used to store the newly built version of any component as a key/value pair in git notes, linked to commit it was built from: `COMPONENT_foo=1.1.0`.
 
 <!-- omit in toc -->
 
@@ -67,14 +69,9 @@ If you do not do this, subsequent fetches will overwrite any local changes made.
 
 ### Set key/value pairs
 
-The first time you set a key/value, gino-keva will warn you that no prior notes were found within the last 50 commits:
 
 ````console
-foo@bar:~$ gino-keva set my-key my_value
-WARN[0000] No prior notes found within maximum depth!    ref=gino_keva
-
-You can continue to add other key/values:
-```console
+foo@bar (f10b970d):~$ gino-keva set key my_value
 foo@bar (f10b970d):~$ gino-keva set counter 12
 foo@bar (f10b970d):~$ gino-keva set foo bar
 ````
@@ -83,21 +80,20 @@ foo@bar (f10b970d):~$ gino-keva set foo bar
 
 ```console
 foo@bar (f10b970d):~$ gino-keva list
-COUNTER=12
+counter=12
 foo=bar
 key=my_value
 ```
 
-gino-keva converts the key/value pairs into json and stores these in git notes, along with the souce commit hash. You can retrieve this format using the `--output=raw` flag:
-
-```console
-foo@bar (f10b970d):~$ gino-keva list --output=raw
-{"COUNTER":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"key":{"data":"my_value","source":"f10b970d"}}
-
 foo@bar (f10b970d):~$ git commit --allow-empty -m "Dummy commit"
 foo@bar (a8517558):~$ gino-keva set pi 3.14
 foo@bar (a8517558):~$ gino-keva list --output=json
-{"COUNTER":{"data":"12","source":"f10b970d"},"foo":{"data":"bar","source":"f10b970d"},"key":{"data":"my_value","source":"f10b970d"},"PI":{"data":"3.14","source":"a8517558"}}
+{
+  "counter": "12",
+  "foo": "bar",
+  "key": "my_value",
+  "pi": "3.14"
+}
 ```
 
 ### Unset keys
@@ -107,9 +103,9 @@ Finally, you can unset keys using `unset`:
 ```console
 foo@bar (a8517558):~$ gino-keva unset foo
 foo@bar (a8517558):~$ gino-keva list
-COUNTER=12
+counter=12
 key=my_value
-PI=3.14
+pi=3.14
 ```
 
 ### Use custom notes reference
