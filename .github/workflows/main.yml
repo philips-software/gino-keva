@@ -12,8 +12,8 @@ on:
       - 'main'
 
 jobs:
-  build:
-    name: Build
+  build_linux:
+    name: Build - Linux
     runs-on: ubuntu-latest
     container: golang:1.16-buster
     steps:
@@ -33,28 +33,12 @@ jobs:
           make all
 
       - name: Generate release notes
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         run: |
           echo 'RELEASE_NOTES<<EOF' >> $GITHUB_ENV
           make release-notes >> $GITHUB_ENV
           echo >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
-
-      - name: Get git sha (short)
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run : |
-          GITHUB_SHA_SHORT=$(git rev-parse --short "$GITHUB_SHA")
-
-      - name: Create prerelease
-        if: ${{ github.ref == 'refs/heads/main' }}
-        uses: softprops/action-gh-release@v0.1.7
-        with:
-          tag_name: ${{ env.GITHUB_SHA_SHORT }}
-          name: Development Build
-          prerelease: true
-          body: ${{ env.RELEASE_NOTES }}
-          files: build/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add binaries to release
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
@@ -65,53 +49,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  docker:
-    name: Docker build/push
-    needs:
-      - build
-    if: ${{ startsWith(github.ref, 'refs/tags/') }}
-    runs-on: ubuntu-latest
+  build_windows:
+    name: Build - Windows
+    runs-on: windows-2019
     steps:
-      - uses: actions/checkout@v2       
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-      - uses: robinraju/release-downloader@v1
+      - uses: actions/setup-go@v2
         with:
-          repository: ${{ github.repository }}
-          latest: true
-          fileName: gino-keva
-          out-file-path: build/
-          token: '${{ secrets.GITHUB_TOKEN }}'
-      
-      - run: chmod +x build/gino-keva
-      
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: |
-            philipssoftware/gino-keva
-          tags: |
-            type=semver,pattern={{version}}
+          go-version: 1.16
 
-      - name: Login to DockerHub
-        uses: azure/docker-login@v1
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          
-      - name: Build and push container
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          push: true
+      - name: Build
+        run: |
+          go get -u golang.org/x/lint/golint
+          go install honnef.co/go/tools/cmd/staticcheck@2021.1
+          go install github.com/ahmetb/govvv@v0.3.0
+          make all
+          mv build/gino-keva build/gino-keva.exe
 
-      - name: Update repo description
-        uses: peter-evans/dockerhub-description@v2
+      - name: Add binaries to release
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: softprops/action-gh-release@v0.1.7
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-          repository: philipssoftware/gino-keva
-          short-description: ${{ github.event.repository.description }}
+          files: build/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
