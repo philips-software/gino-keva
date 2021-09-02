@@ -15,7 +15,7 @@ jobs:
   build_linux:
     name: Build - Linux
     runs-on: ubuntu-latest
-    container: golang:1.16-buster
+    container: golang:1.17-buster
     steps:
       - uses: actions/checkout@v2
         with:
@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - name: Build
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.17
 
       - name: Build
         run: |
